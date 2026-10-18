@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "service-engine"
+version = "0.1.0"
+description = "Deterministic simulation engine for Sabis (Service), a street game from Kano, Nigeria."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []  # standard library only
+
+[project.scripts]
+service-sim = "service.__main__:main"
+service-api = "service.api.server:main"
+
+[tool.setuptools.packages.find]
+include = ["service*"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*" = ["E501", "E701", "E702"]  # compact developer-only tooling
+
+[tool.mypy]
+python_version = "3.11"
+files = ["service"]
+disallow_untyped_defs = true
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
