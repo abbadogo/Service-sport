@@ -13,3 +13,4 @@ dist/
 !.env.example
 node_modules/
 web/dist/
+*.zip
