@@ -2,9 +2,11 @@
 import sys
 from collections import Counter
 from multiprocessing import Pool
+
 from service.core.config import MatchConfig
 from service.engine.events import PointScored, StrikeMade
 from service.engine.state_machine import ServiceMatch
+
 
 def one(args):
     seed, minutes = args
@@ -21,7 +23,8 @@ if __name__ == "__main__":
     mins = float(sys.argv[2]) if len(sys.argv) > 2 else 2
     with Pool() as p:
         R = p.map(one, [(s, mins) for s in range(100, 100 + n)])
-    tot = lambda k: sum((r[k] for r in R), Counter())
+    def tot(k):
+        return sum((r[k] for r in R), Counter())
     pts = sum(r["a"] + r["b"] for r in R)
     print(f"matches={n} minutes={mins}")
     print("wins:", Counter(r["win"] for r in R), "sudden death:", sum(r["sd"] for r in R))

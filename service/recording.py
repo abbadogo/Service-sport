@@ -6,8 +6,15 @@ from typing import Any
 
 from service.core.types import Team
 from service.engine.events import (
-    MatchEnded, MatchPhase, PointReason, PointScored, ServeLaunched, StrikeMade, StrikeMishit,
-    SuddenDeathStarted, TeamRotated,
+    MatchEnded,
+    MatchPhase,
+    PointReason,
+    PointScored,
+    ServeLaunched,
+    StrikeMade,
+    StrikeMishit,
+    SuddenDeathStarted,
+    TeamRotated,
 )
 from service.engine.state_machine import ServiceMatch
 

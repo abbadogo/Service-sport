@@ -16,8 +16,8 @@ from typing import Sequence
 
 from service.agents.formation import guard_position, home_position
 from service.agents.player import Player
-from service.court.boundary_referee import BoundaryReferee, Zone
 from service.core.types import MIDLINE_X_M, Team, Vec2
+from service.court.boundary_referee import BoundaryReferee, Zone
 from service.physics.forecast import BallForecaster
 from service.physics.gyroscopic_engine import TireBall
 

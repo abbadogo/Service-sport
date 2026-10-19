@@ -1,9 +1,10 @@
 import unittest
+
+from service.agents.policies import ServeIntent
 from service.core.config import MatchConfig
 from service.core.types import Team, Vec2
 from service.engine import MatchEndReason, MatchPhase, ServiceMatch
 from service.engine.events import PointScored, ServeFault
-from service.agents.policies import ServeIntent
 
 
 class BadServe:
@@ -20,10 +21,12 @@ class MatchTests(unittest.TestCase):
     def test_default_serve_always_crosses_midline(self):
         crossed = 0
         for seed in range(1, 25):
-            m = ServiceMatch(MatchConfig(duration_minutes=1, seed=seed)); m.start()
+            m = ServiceMatch(MatchConfig(duration_minutes=1, seed=seed))
+            m.start()
             while m.phase is not MatchPhase.LIVE:
                 m.step()
-            b = m.ball; side = m.server_team
+            b = m.ball
+            side = m.server_team
             while m.phase is MatchPhase.LIVE:
                 m.step()
                 on_far_side = (b.x > 52.5) if side is Team.A else (b.x < 52.5)
@@ -36,10 +39,12 @@ class MatchTests(unittest.TestCase):
     def test_lazy_serve_is_point_against_server_no_redo(self):
         from service.engine.events import PointReason
         m = ServiceMatch(MatchConfig(duration_minutes=1, seed=3), serve_policy=LazyServe())
-        m.start(); pts = []
+        m.start()
+        pts = []
         for _ in range(120 * 60):
             pts += [e for e in m.step() if isinstance(e, PointScored)]
-            if pts: break
+            if pts:
+                break
         self.assertEqual(pts[0].reason, PointReason.LAZY_SERVE)
         self.assertIs(pts[0].conceded_by, Team.A)  # opening server
         self.assertIs(pts[0].scorer, Team.B)
@@ -57,15 +62,18 @@ class MatchTests(unittest.TestCase):
             if phase is MatchPhase.HAND_PICKUP:
                 self.assertGreaterEqual(m.clock.remaining_s, before)  # no ticking in pickup
             for p in m._all:  # nobody crosses the midline
-                if p.team is Team.A: self.assertLessEqual(p.pos.x, 52.5)
-                else: self.assertGreaterEqual(p.pos.x, 52.5)
+                if p.team is Team.A:
+                    self.assertLessEqual(p.pos.x, 52.5)
+                else:
+                    self.assertGreaterEqual(p.pos.x, 52.5)
         r = m.result
         self.assertAlmostEqual(r.live_time_s, 120.0, delta=0.05)
         self.assertEqual(r.score_a + r.score_b, len(pts))
         self.assertTrue(r.paused_time_s > 0)
 
     def test_conceding_side_serves_next(self):
-        m = ServiceMatch(MatchConfig(duration_minutes=3, seed=2)); m.start()
+        m = ServiceMatch(MatchConfig(duration_minutes=3, seed=2))
+        m.start()
         last_conceder = None
         while m.phase is not MatchPhase.FINISHED:
             for e in m.step():
@@ -95,7 +103,8 @@ class MatchTests(unittest.TestCase):
         events = []
         for _ in range(120 * 60):
             events += m.step()
-            if any(isinstance(e, PointScored) for e in events): break
+            if any(isinstance(e, PointScored) for e in events):
+                break
         faults = [e for e in events if isinstance(e, ServeFault)]
         self.assertGreaterEqual(len(faults), 2)
         pt = next(e for e in events if isinstance(e, PointScored))

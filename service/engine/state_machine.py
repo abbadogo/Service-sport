@@ -18,15 +18,32 @@ from dataclasses import dataclass, field
 from service.agents.chase_controller import CursorSelection, TeamChaseController
 from service.agents.player import Player, build_team
 from service.agents.policies import (
-    DefaultServePolicy, DefaultStrikePolicy, ServePolicy, StrikePolicy, long_hit_speed,
+    DefaultServePolicy,
+    DefaultStrikePolicy,
+    ServePolicy,
+    StrikePolicy,
+    long_hit_speed,
 )
 from service.core.config import MatchConfig, PhysicsConfig, StaminaConfig, StrikeConfig
 from service.core.types import PITCH_LENGTH_M, PITCH_WIDTH_M, TEAM_SIZE, Team, Vec2
 from service.court.boundary_referee import BoundaryReferee, HandPickupTransition, ServeRequest
 from service.engine.events import (
-    CursorChanged, MatchEnded, MatchEndReason, MatchEvent, MatchMode, MatchPhase,
-    PhaseChanged, PointReason, PointScored, ServeFault, ServeLaunched, StrikeMade,
-    StrikeMishit, SuddenDeathStarted, TeamRotated, ZoneCorrection,
+    CursorChanged,
+    MatchEnded,
+    MatchEndReason,
+    MatchEvent,
+    MatchMode,
+    MatchPhase,
+    PhaseChanged,
+    PointReason,
+    PointScored,
+    ServeFault,
+    ServeLaunched,
+    StrikeMade,
+    StrikeMishit,
+    SuddenDeathStarted,
+    TeamRotated,
+    ZoneCorrection,
 )
 from service.engine.match_clock import MatchClock, PauseReason
 from service.physics.forecast import BallForecaster

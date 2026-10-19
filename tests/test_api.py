@@ -82,7 +82,9 @@ class MatchEndpointTests(ApiTestCase):
     def test_rotation_toggle_changes_the_match_log(self):
         on = self.call("POST", "/api/matches", {"minutes": 0.3, "seed": 9, "settings": {"rotation": 1}})[1]
         off = self.call("POST", "/api/matches", {"minutes": 0.3, "seed": 9, "settings": {"rotation": 0}})[1]
-        kinds = lambda r: [e["kind"] for e in r["events"]]  # noqa: E731
+        def kinds(r):
+            return [e["kind"] for e in r["events"]]
+
         self.assertIn("point", kinds(on))
         self.assertIn("rotate", kinds(on))
         self.assertNotIn("rotate", kinds(off))
@@ -113,7 +115,9 @@ class MatchEndpointTests(ApiTestCase):
         self.assertEqual(status, 200)
 
     def test_rejects_non_object_and_invalid_json_and_oversize(self):
-        code = lambda *a, **k: self.call("POST", "/api/matches", *a, **k)[1]["error"]["code"]  # noqa: E731
+        def code(*a, **k):
+            return self.call("POST", "/api/matches", *a, **k)[1]["error"]["code"]
+
         self.assertEqual(code([1, 2]), "invalid_request")
         self.assertEqual(code(raw=b"{not json"), "invalid_json")
         status, body = self.call("POST", "/api/matches", raw=b" " * (server.MAX_BODY_BYTES + 1))

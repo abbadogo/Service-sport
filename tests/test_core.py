@@ -23,7 +23,10 @@ class ClockTests(unittest.TestCase):
         c = MatchClock(1)
         c.tick(5.0)  # not started: paused
         self.assertEqual(c.remaining_s, 60.0)
-        c.resume(); c.tick(10.0); c.pause(); c.tick(30.0)
+        c.resume()
+        c.tick(10.0)
+        c.pause()
+        c.tick(30.0)
         self.assertAlmostEqual(c.remaining_s, 50.0)
         self.assertAlmostEqual(c.paused_elapsed_s, 35.0)
 
@@ -78,8 +81,12 @@ class RefereeTests(unittest.TestCase):
         viol = self.ref.enforce_zones([p])
         self.assertEqual(len(viol), 1)
         self.assertEqual(p.pos.x, 52.5)
-        class Q(P): team, pos = Team.B, Vec2(10, 10)
-        q = Q(); self.ref.enforce_zones([q]); self.assertEqual(q.pos.x, 52.5)
+        class Q(P):
+            team, pos = Team.B, Vec2(10, 10)
+
+        q = Q()
+        self.ref.enforce_zones([q])
+        self.assertEqual(q.pos.x, 52.5)
 
     def test_side_of(self):
         self.assertEqual(self.ref.side_of(10), Team.A)
@@ -114,7 +121,8 @@ class PhysicsTests(unittest.TestCase):
         self.assertGreater(self.roll(3, 14)[0].distance, self.roll(3, 8)[0].distance)
 
     def test_determinism(self):
-        a, _ = self.roll(4, noise=True); b, _ = self.roll(4, noise=True)
+        a, _ = self.roll(4, noise=True)
+        b, _ = self.roll(4, noise=True)
         self.assertEqual((a.x, a.y), (b.x, b.y))
 
 

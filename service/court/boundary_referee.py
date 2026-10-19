@@ -28,8 +28,11 @@ class PlayerLike(Protocol):
     reach: float
     crouched: bool
 
-    def move_toward(self, target: Vec2, dt: float, intensity: float = 1.0) -> float: ...
-    def rest(self, dt: float) -> None: ...
+    def move_toward(self, target: Vec2, dt: float, intensity: float = 1.0) -> float:
+        ...
+
+    def rest(self, dt: float) -> None:
+        ...
 
 
 class FaultCode(Enum):

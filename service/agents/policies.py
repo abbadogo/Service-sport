@@ -10,7 +10,12 @@ from typing import Protocol, Sequence
 from service.agents.player import Player
 from service.core.config import StrikeConfig
 from service.core.types import (
-    MIDLINE_X_M, PITCH_LENGTH_M, PITCH_WIDTH_M, Team, Vec2, clamp,
+    MIDLINE_X_M,
+    PITCH_LENGTH_M,
+    PITCH_WIDTH_M,
+    Team,
+    Vec2,
+    clamp,
 )
 from service.physics.gyroscopic_engine import GyroscopicEngine, StrikeImpulse, TireBall
 
@@ -25,13 +30,17 @@ class ServeIntent:
 
 
 class ServePolicy(Protocol):
-    def decide(self, server: Player) -> ServeIntent: ...
+    def decide(self, server: Player) -> ServeIntent:
+        ...
 
 
 class StrikePolicy(Protocol):
-    def choose_charge_target(self, striker: Player, ball: TireBall) -> float: ...
+    def choose_charge_target(self, striker: Player, ball: TireBall) -> float:
+        ...
+
     def decide(self, striker: Player, ball: TireBall, opponents: Sequence[Player],
-               level: float) -> StrikeImpulse: ...
+               level: float) -> StrikeImpulse:
+        ...
 
 
 def long_hit_speed(team: Team, ball_x: float, direction: Vec2, depth_m: float) -> float:

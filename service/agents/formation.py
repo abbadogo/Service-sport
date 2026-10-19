@@ -7,7 +7,13 @@ ends of the pitch are exactly alike, including the direction the bevel curves.
 from __future__ import annotations
 
 from service.core.types import (
-    MIDLINE_X_M, PITCH_LENGTH_M, PITCH_WIDTH_M, TEAM_SIZE, Team, Vec2, clamp,
+    MIDLINE_X_M,
+    PITCH_LENGTH_M,
+    PITCH_WIDTH_M,
+    TEAM_SIZE,
+    Team,
+    Vec2,
+    clamp,
 )
 
 COLUMN_FRACTIONS: tuple[float, ...] = (0.12, 0.26, 0.40, 0.54, 0.68, 0.82)  # from own baseline

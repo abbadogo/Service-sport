@@ -1,10 +1,12 @@
 """Fast scoring-rate probe: python scripts/quick_rate.py SKILL [seeds] [sim_seconds]"""
-import random, sys
+import random
+import sys
 from collections import Counter
+
+from service.agents.policies import DefaultStrikePolicy
 from service.core.config import MatchConfig
 from service.engine import ServiceMatch
 from service.engine.events import PointScored, StrikeMade
-from service.agents.policies import DefaultStrikePolicy
 
 skill = float(sys.argv[1]); n = int(sys.argv[2]) if len(sys.argv) > 2 else 5
 sim = float(sys.argv[3]) if len(sys.argv) > 3 else 240
