@@ -107,7 +107,8 @@ def validate_overrides(overrides: Mapping[str, object]) -> dict[str, float]:
 def build_configs(overrides: Mapping[str, object]) -> tuple[PhysicsConfig, StrikeConfig, StaminaConfig]:
     """Apply validated overrides on top of the defaults. Cross-field problems
     (for example max strike speed below the minimum) also raise SettingsError."""
-    values: dict[str, dict[str, float]] = {"physics": {}, "strike": {}, "stamina": {}, "match": {}}
+    # Any: each group is unpacked into a different dataclass whose fields have different types.
+    values: dict[str, dict[str, Any]] = {"physics": {}, "strike": {}, "stamina": {}, "match": {}}
     for key, v in validate_overrides(overrides).items():
         spec = _BY_KEY[key]
         values[spec.target][spec.field] = v

@@ -14,6 +14,7 @@ from __future__ import annotations
 import math
 import random
 from dataclasses import dataclass, field
+from typing import Any
 
 from service.agents.chase_controller import CursorSelection, TeamChaseController
 from service.agents.player import Player, build_team
@@ -186,7 +187,7 @@ class ServiceMatch:
         }
 
     # =============================================================== helpers
-    def _emit(self, cls: type[MatchEvent], **kw) -> MatchEvent:
+    def _emit(self, cls: type[MatchEvent], **kw: Any) -> MatchEvent:
         ev = cls(sim_time=self.sim_time, clock=self.clock.display, **kw)
         self._out.append(ev)
         self.event_log.append(ev)
