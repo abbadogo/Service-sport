@@ -1,5 +1,6 @@
 git status --short
-version: 2
+cd web
+git status --shortversion: 2
 updates:
   - package-ecosystem: pip
     directory: /
