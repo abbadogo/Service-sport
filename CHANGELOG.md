@@ -6,6 +6,17 @@ All notable changes to this project are documented here.
 
 Verified on Python 3.12: `python -m unittest discover -s tests` ran 62 tests, all passing (about 55 s).
 
+### Fixed
+- CI workflow was rejected by GitHub (`hashFiles` is not allowed in a job-level `if`); removed the condition.
+- Web component tests leaked rendered DOM between tests (no automatic cleanup without Vitest globals); added an
+  explicit cleanup.
+- Ruff findings (one-line compound statements, lambda assignments, an ambiguous variable name) and two mypy errors.
+- `npm audit` findings in the test tooling: upgraded vite, vitest and the React plugin (0 vulnerabilities).
+
+### Changed
+- Web CI job runs on Node 22. Dependabot groups minor/patch updates and holds back major upgrades of React, eslint and
+  TypeScript.
+
 ### Added
 - Position rotation (draft): after a point the conceding team rotates one slot; toggle `rotation` in the settings.
 - Long hit (draft): a power bar at 90% or more sends the disc deep, aimed to die short of the far baseline, for extra

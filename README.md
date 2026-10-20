@@ -143,22 +143,19 @@ without touching the match loop.
 
 ## Verification status
 
-Be aware of what has and has not been checked.
+What has actually been run, and where.
 
-- **Run and passing (Python 3.12):** `python -m unittest discover -s tests` (see the CHANGELOG for the count),
-  `python -m service`, and the API server (health and error responses checked live with curl).
-- **Web app, checked here without npm:** the logic modules (`web/src/lib/replay.ts`, `settings.ts`, `api.ts`,
-  `draw.ts`) pass a strict TypeScript typecheck; the replay and settings tests (15 cases) pass under a minimal
-  stand-in for Vitest; and a real replay produced by the Python server loads and samples correctly through the
-  TypeScript code (contract check).
-- **Not yet run by the author:** `npm install`, `npm run lint`, `npm run typecheck` on the React files,
-  `npm test` with real Vitest (including the API and component tests), `npm run build`, `ruff check .`, `mypy`,
-  `python -m build`, `pip-audit`, and the GitHub Actions workflow. Package versions in `web/package.json` are
-  best guesses and may need adjusting on first install. The first CI run may report lint or type issues.
-  Python 3.11 has not been tried.
-- **No lockfile:** the engine has no runtime dependencies. Dev-tool versions in
-  `requirements-dev.txt` are ranges, not hashes; generate a pinned lock (for example with
-  `pip-compile`) once the tools can be installed.
+- **GitHub Actions (CI workflow), on pushes to `main`, as of commit `f8e5411` (2026-10-20): passing.**
+  - Python 3.11 and 3.12: `ruff check .`, `mypy`, 62 unit tests, `python -m build`, `pip-audit`.
+  - Web (Node 22): `npm ci`, `eslint`, `tsc --noEmit`, 27 Vitest tests, `vite build`, `npm audit` (0 vulnerabilities).
+- **Run by hand in a GitHub Codespace:** the same Python and web checks, the API server (`python -m service.api`)
+  and the Sabis Lab web app in a browser.
+- **Not covered by automated tests:** the browser UI end to end (there are tests for the logic, the API client and the
+  settings panel, but none that drive the whole app), and the game's balance (see below).
+- **No lockfile for the Python dev tools:** the engine has no runtime dependencies. Versions in
+  `requirements-dev.txt` are ranges, not hashes; generate a pinned lock (for example with `pip-compile`).
+- **Dependabot** (`.github/dependabot.yml`) groups minor and patch updates and holds back major upgrades of React,
+  eslint and TypeScript until they are done deliberately.
 
 ## Known limitations
 
