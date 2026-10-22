@@ -162,16 +162,15 @@ without touching the match loop.
 
 What has actually been run, and where.
 
-- **GitHub Actions (CI workflow), on pushes to `main`, as of commit `f8e5411` (2026-10-20): passing.**
+- **GitHub Actions (CI workflow), on pushes to `main`, as of commit `df69924` (run #45, 2026-10-22): passing.**
   - Python 3.11 and 3.12: `ruff check .`, `mypy`, 62 unit tests, `python -m build`, `pip-audit`.
   - Web (Node 22): `npm ci`, `eslint`, `tsc --noEmit`, 27 Vitest tests, `vite build`, `npm audit` (0 vulnerabilities).
 - **Run by hand in a GitHub Codespace:** the same Python and web checks, the API server (`python -m service.api`)
   and the Sabis Lab web app in a browser.
-- **Live play (newest, checked locally only):** the engine control code, session manager and API pass 20 new Python
-  tests; a real-time check kept pace with the wall clock (5.4 s of play simulated 5.3 s); the front-end logic passes a
-  strict typecheck and a contract check against real server frames. The Play screen (React components, joystick, strike
-  button, keyboard handling) has **not** been run in a browser or by `npm run lint`/`typecheck`/`test`, and CI has not
-  yet run on these changes.
+- **Live play:** covered by the CI run above (20 Python tests for the engine control code, session manager and API; web
+  tests for the input logic, API client and strike button). A real-time check against a live server kept pace with the
+  wall clock (5.4 s of play simulated 5.3 s). The Play screen has not yet been played on a phone or in a browser by the
+  author, so how the controls and the polling connection *feel* is unverified.
 - **Not covered by automated tests:** the browser UI end to end (there are tests for the logic, the API client and the
   settings panel, but none that drive the whole app), and the game's balance (see below).
 - **No lockfile for the Python dev tools:** the engine has no runtime dependencies. Versions in
