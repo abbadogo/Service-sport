@@ -73,6 +73,12 @@ class StrikeMade(MatchEvent):
 
 
 @dataclass(frozen=True, slots=True)
+class SwingMissed(MatchEvent):
+    team: Team
+    player_id: str
+
+
+@dataclass(frozen=True, slots=True)
 class TeamRotated(MatchEvent):
     team: Team
 

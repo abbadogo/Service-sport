@@ -145,6 +145,41 @@ class TeamChaseController:
         target = self._zone.clamp(ball.position)
         return InterceptPlan(target, p.pos.distance_to(target) / speed, 0.0, False, 1.0)
 
+    # --------------------------------------------------------------- human
+    def update_human(self, players: Sequence[Player], ball: TireBall, dt: float,
+                     move: Vec2, lock: bool = False) -> Player:
+        """A human drives the player nearest the ball; everyone else guards their lane.
+        ``lock`` keeps the same player while a strike is being charged."""
+        self._hold_left = max(0.0, self._hold_left - dt)
+        controlled = self._select_for_human(players, ball, lock)
+        self.cursor_id = controlled.pid
+        self.last_plan = None
+        size = move.length()
+        if size > 0.05:
+            target = self._zone.clamp(controlled.pos + move.normalized() * 8.0)
+            controlled.move_toward(target, dt, min(1.0, size))
+        else:
+            controlled.rest(dt)
+        for p in players:
+            if p is not controlled:
+                p.move_toward(guard_position(self.team, p.slot, ball.y), dt, self.GUARD_INTENSITY)
+        return controlled
+
+    def _select_for_human(self, players: Sequence[Player], ball: TireBall, lock: bool) -> Player:
+        ref = self._zone.clamp(ball.position)
+        cur = next((p for p in players if p.pid == self.cursor_id), None)
+        if cur is not None and lock:
+            return cur
+        best = min(players, key=lambda p: p.pos.distance_to(ref))
+        if cur is None:
+            self._hold_left = self._hold
+            return best
+        if (best is not cur and self._hold_left <= 0.0
+                and best.pos.distance_to(ref) < cur.pos.distance_to(ref) - self._margin):
+            self._hold_left = self._hold
+            return best
+        return cur
+
     # ------------------------------------------------------------ dead ball
     def update_dead_ball(self, players: Sequence[Player], dt: float, exclude: frozenset[str]) -> None:
         self.cursor_id, self.last_plan = None, None

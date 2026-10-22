@@ -26,7 +26,7 @@ from service.agents.policies import (
     long_hit_speed,
 )
 from service.core.config import MatchConfig, PhysicsConfig, StaminaConfig, StrikeConfig
-from service.core.types import PITCH_LENGTH_M, PITCH_WIDTH_M, TEAM_SIZE, Team, Vec2
+from service.core.types import PITCH_LENGTH_M, PITCH_WIDTH_M, TEAM_SIZE, Team, Vec2, clamp
 from service.court.boundary_referee import BoundaryReferee, HandPickupTransition, ServeRequest
 from service.engine.events import (
     CursorChanged,
@@ -43,9 +43,11 @@ from service.engine.events import (
     StrikeMade,
     StrikeMishit,
     SuddenDeathStarted,
+    SwingMissed,
     TeamRotated,
     ZoneCorrection,
 )
+from service.engine.human import HumanInput
 from service.engine.match_clock import MatchClock, PauseReason
 from service.physics.forecast import BallForecaster
 from service.physics.gyroscopic_engine import GyroscopicEngine, StepStatus, StrikeImpulse, TireBall
@@ -94,8 +96,10 @@ class ServiceMatch:
                  referee: BoundaryReferee | None = None,
                  serve_policy: ServePolicy | None = None,
                  strike_policy: StrikePolicy | None = None,
-                 selection: CursorSelection = CursorSelection.NEAREST_DISTANCE) -> None:
+                 selection: CursorSelection = CursorSelection.NEAREST_DISTANCE,
+                 human_team: Team | None = None) -> None:
         self.config = config or MatchConfig()
+        self.human_team = human_team  # that team's nearest player is driven by HumanInput
         seed = self.config.seed
         self._dt = self.config.dt
         self.referee = referee or BoundaryReferee()
@@ -147,7 +151,7 @@ class ServiceMatch:
         spot = self.referee.default_serve_spot(team)
         self._begin_pickup(team, spot, already_holding=True)
 
-    def step(self) -> list[MatchEvent]:
+    def step(self, human: HumanInput | None = None) -> list[MatchEvent]:
         """Advance one fixed tick. Returns the events emitted during it."""
         if self.phase is MatchPhase.PREMATCH:
             raise RuntimeError("call start() first")
@@ -161,7 +165,7 @@ class ServiceMatch:
         if self.phase is MatchPhase.HAND_PICKUP:
             self._step_pickup(dt)
         else:
-            self._step_live(dt)
+            self._step_live(dt, human)
         if self.phase is not MatchPhase.FINISHED and self.sim_time >= self.config.max_sim_seconds:
             self._finish(None, MatchEndReason.ABORTED)
         return self._out
@@ -286,16 +290,25 @@ class ServiceMatch:
         self._set_phase(MatchPhase.LIVE)
 
     # ================================================================== live
-    def _step_live(self, dt: float) -> None:
+    def _step_live(self, dt: float, human: HumanInput | None = None) -> None:
         ball = self.ball
         assert ball is not None
         expired = self.clock.tick(dt)
 
         for team, ctl in self.controllers.items():
-            if ctl.update_live(self.squads[team], ball, self.sim_time, dt, self._can_strike(team)):
+            if team is self.human_team:
+                before = ctl.cursor_id
+                squad = self.squads[team]
+                move = Vec2(human.move_x, human.move_y) if human else Vec2(0.0, 0.0)
+                ctl.update_human(squad, ball, dt, move, lock=any(p.power_bar.charging for p in squad))
+                if ctl.cursor_id != before:
+                    self._emit(CursorChanged, team=team, player_id=ctl.cursor_id)
+            elif ctl.update_live(self.squads[team], ball, self.sim_time, dt, self._can_strike(team)):
                 self._emit(CursorChanged, team=team, player_id=ctl.cursor_id)
         self._enforce_zones()
         self._update_charging(ball, dt)
+        if self.human_team is not None:
+            self._human_swing(human, ball, dt)
         self._resolve_strikes(ball)
 
         status = self.engine.step(ball, dt)
@@ -331,6 +344,8 @@ class ServiceMatch:
         """Players who can strike hold their power bar while the ball is in wind-up range."""
         rng_m = self.strike_cfg.windup_range_m
         for p in self._all:
+            if p.team is self.human_team:
+                continue
             eligible = p.strike_cooldown <= 0.0 and self._can_strike(p.team)
             if eligible and math.hypot(p.pos.x - ball.x, p.pos.y - ball.y) <= rng_m:
                 if not p.power_bar.charging:
@@ -342,7 +357,7 @@ class ServiceMatch:
     def _resolve_strikes(self, ball: TireBall) -> None:
         cands: list[tuple[float, Player]] = []
         for p in self._all:
-            if p.strike_cooldown > 0.0 or not self._can_strike(p.team):
+            if p.team is self.human_team or p.strike_cooldown > 0.0 or not self._can_strike(p.team):
                 continue
             d = math.hypot(p.pos.x - ball.x, p.pos.y - ball.y)
             if d <= p.reach:
@@ -353,34 +368,68 @@ class ServiceMatch:
                 continue
             level = p.power_bar.release(self.strike_cfg.min_level)
             impulse = self.strike_policy.decide(p, ball, self.squads[p.team.opponent], level)
-            chance = self.strike_cfg.mishit_probability(ball.speed, p.speed_factor)
-            mishit = self._rng.random() < chance
-            long_hit = not mishit and level >= self.strike_cfg.long_hit_level
-            if long_hit:  # aimed to die deep in the opponent's end, short of the baseline
-                c = self.strike_cfg
-                impulse = StrikeImpulse(
-                    impulse.direction.rotated(self._rng.gauss(0.0, c.long_hit_aim_error_rad)),
-                    long_hit_speed(p.team, ball.x, impulse.direction, c.long_hit_depth_m),
-                    impulse.tilt_recovery, impulse.lean_kick)
-                p.spend_stamina(c.long_hit_stamina_cost)
-            if mishit:  # a weak dribble in the wrong direction
-                c = self.strike_cfg
-                impulse = StrikeImpulse(
-                    impulse.direction.rotated(self._rng.gauss(0.0, c.mishit_aim_error_rad)),
-                    self._rng.uniform(c.mishit_min_speed, c.mishit_max_speed), 0.0, 0.0)
-            before = ball.tilt_deg
-            self.engine.apply_strike(ball, impulse)
-            p.strike_cooldown = self.STRIKE_COOLDOWN_S
-            p.spend_stamina(self.stamina_cfg.strike_cost)
-            p.strikes += 1
-            self._strikes_since_serve += 1
-            self._last_striker, self._crossed = p.team, False
-            if mishit:
-                self._emit(StrikeMishit, team=p.team, player_id=p.pid, speed=impulse.speed)
-            self._emit(StrikeMade, team=p.team, player_id=p.pid, speed=impulse.speed,
-                       tilt_before_deg=before, tilt_after_deg=ball.tilt_deg, power=level,
-                       long_hit=long_hit)
+            self._execute_strike(p, ball, impulse, level)
             break  # at most one strike per tick
+
+    def _human_swing(self, human: HumanInput | None, ball: TireBall, dt: float) -> None:
+        """Hold the button to charge the power bar; releasing it swings."""
+        assert self.human_team is not None
+        cid = self.controllers[self.human_team].cursor_id
+        p = self.players.get(cid) if cid else None
+        if p is None:
+            return
+        bar = p.power_bar
+        held = human is not None and human.charge
+        if held and p.strike_cooldown <= 0.0 and self._can_strike(p.team):
+            if not bar.charging:
+                bar.press(1.0)
+            bar.update(dt)
+        elif bar.charging:
+            self._swing(p, ball, bar.release(self.strike_cfg.min_level), human)
+
+    def _swing(self, p: Player, ball: TireBall, level: float, human: HumanInput | None) -> None:
+        if not self.referee.validate_strike(p, ball.x, ball.y, ball.is_live).ok:
+            p.strike_cooldown = self.STRIKE_COOLDOWN_S  # swung at nothing
+            self._emit(SwingMissed, team=p.team, player_id=p.pid)
+            return
+        aim = Vec2(human.aim_x, human.aim_y) if human else Vec2(0.0, 0.0)
+        sign = p.team.forward_sign
+        if aim.length_sq() < 1e-6:
+            aim = Vec2(sign, 0.0)
+        forward = sign * max(aim.x * sign, 0.3 * aim.length())  # never strike backwards
+        quality = clamp(0.65 + 0.35 * p.speed_factor, 0.0, 1.0)
+        err = self._rng.gauss(0.0, self.strike_cfg.aim_error_for(level) + 0.04 * (1.0 - quality))
+        impulse = StrikeImpulse(Vec2(forward, aim.y).normalized().rotated(err),
+                                self.strike_cfg.speed_for(level) * p.strength,
+                                DefaultStrikePolicy.RECOVER_MAX_RAD * quality, 0.0)
+        self._execute_strike(p, ball, impulse, level)
+
+    def _execute_strike(self, p: Player, ball: TireBall, impulse: StrikeImpulse, level: float) -> None:
+        """Apply a strike: the mishit and long-hit rules, bookkeeping and events (AI and human alike)."""
+        c = self.strike_cfg
+        mishit = self._rng.random() < c.mishit_probability(ball.speed, p.speed_factor)
+        long_hit = not mishit and level >= c.long_hit_level
+        if long_hit:  # aimed to die deep in the opponent's end, short of the baseline
+            impulse = StrikeImpulse(
+                impulse.direction.rotated(self._rng.gauss(0.0, c.long_hit_aim_error_rad)),
+                long_hit_speed(p.team, ball.x, impulse.direction, c.long_hit_depth_m),
+                impulse.tilt_recovery, impulse.lean_kick)
+            p.spend_stamina(c.long_hit_stamina_cost)
+        if mishit:  # a weak dribble in the wrong direction
+            impulse = StrikeImpulse(
+                impulse.direction.rotated(self._rng.gauss(0.0, c.mishit_aim_error_rad)),
+                self._rng.uniform(c.mishit_min_speed, c.mishit_max_speed), 0.0, 0.0)
+        before = ball.tilt_deg
+        self.engine.apply_strike(ball, impulse)
+        p.strike_cooldown = self.STRIKE_COOLDOWN_S
+        p.spend_stamina(self.stamina_cfg.strike_cost)
+        p.strikes += 1
+        self._strikes_since_serve += 1
+        self._last_striker, self._crossed = p.team, False
+        if mishit:
+            self._emit(StrikeMishit, team=p.team, player_id=p.pid, speed=impulse.speed)
+        self._emit(StrikeMade, team=p.team, player_id=p.pid, speed=impulse.speed,
+                   tilt_before_deg=before, tilt_after_deg=ball.tilt_deg, power=level, long_hit=long_hit)
 
     # ============================================================== scoring
     def _dead_ball(self, side: Team, reason: PointReason, ball: TireBall) -> None:

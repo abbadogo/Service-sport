@@ -11,15 +11,19 @@ import argparse
 import json
 import logging
 import math
+import re
 import threading
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 from service import __version__
+from service.api.errors import ApiError
+from service.api.play import SessionStore
 from service.api.settings import SettingsError, build_configs, match_fields, public_specs
 from service.core.config import MatchConfig
 from service.core.types import Team
+from service.engine.human import HumanInput
 from service.engine.match_clock import resolve_duration
 from service.engine.state_machine import ServiceMatch
 from service.recording import record_match
@@ -33,24 +37,19 @@ MAX_SEED = 2**31 - 1
 _slots = threading.BoundedSemaphore(MAX_CONCURRENT_MATCHES)
 
 
-class ApiError(Exception):
-    def __init__(self, status: int, code: str, message: str) -> None:
-        super().__init__(message)
-        self.status, self.code, self.message = status, code, message
-
-
 @dataclass(frozen=True)
 class MatchRequest:
     minutes: float | None = None
     seed: int = 1
     opening_server: Team = Team.A
     settings: dict[str, Any] = field(default_factory=dict)
+    side: Team = Team.A  # live play: the team the human controls
 
 
 def parse_match_request(payload: object) -> MatchRequest:
     if not isinstance(payload, dict):
         raise ApiError(400, "invalid_request", "request body must be a JSON object")
-    extra = set(payload) - {"minutes", "seed", "opening_server", "settings"}
+    extra = set(payload) - {"minutes", "seed", "opening_server", "settings", "side"}
     if extra:
         raise ApiError(400, "invalid_request", f"unknown field(s): {', '.join(sorted(extra))}")
 
@@ -67,14 +66,18 @@ def parse_match_request(payload: object) -> MatchRequest:
     if isinstance(seed, bool) or not isinstance(seed, int) or not 0 <= seed <= MAX_SEED:
         raise ApiError(400, "invalid_seed", f"seed must be an integer between 0 and {MAX_SEED}")
 
-    side = payload.get("opening_server", "A")
-    if side not in ("A", "B"):
+    opening = payload.get("opening_server", "A")
+    if opening not in ("A", "B"):
         raise ApiError(400, "invalid_opening_server", "opening_server must be 'A' or 'B'")
+
+    side = payload.get("side", "A")
+    if side not in ("A", "B"):
+        raise ApiError(400, "invalid_side", "side must be 'A' or 'B'")
 
     settings = payload.get("settings", {})
     if not isinstance(settings, dict):
         raise ApiError(400, "invalid_settings", "settings must be an object")
-    return MatchRequest(minutes, seed, Team(side), settings)
+    return MatchRequest(minutes, seed, Team(opening), settings, Team(side))
 
 
 def run_match(req: MatchRequest) -> dict[str, Any]:
@@ -92,6 +95,44 @@ def run_match(req: MatchRequest) -> dict[str, Any]:
                                          stamina_config=stamina))
     finally:
         _slots.release()
+
+
+STORE = SessionStore()
+_SESSION_ID = re.compile(r"[A-Za-z0-9_-]{8,32}")
+
+
+def start_play(req: MatchRequest) -> dict[str, Any]:
+    try:
+        physics, strike, stamina = build_configs(req.settings)
+        rules = match_fields(req.settings)
+    except SettingsError as exc:
+        raise ApiError(400, "invalid_settings", str(exc)) from exc
+    config = MatchConfig(duration_minutes=req.minutes, seed=req.seed, opening_server=req.opening_server,
+                         max_sim_seconds=MAX_SIM_SECONDS, **rules)
+    match = ServiceMatch(config, physics_config=physics, strike_config=strike,
+                         stamina_config=stamina, human_team=req.side)
+    session_id, session = STORE.create(match, req.side)
+    return {"session": session_id, **session.start_payload()}
+
+
+def parse_input(payload: object) -> HumanInput:
+    if not isinstance(payload, dict):
+        raise ApiError(400, "invalid_request", "request body must be a JSON object")
+    extra = set(payload) - {"move", "aim", "charge"}
+    if extra:
+        raise ApiError(400, "invalid_request", f"unknown field(s): {', '.join(sorted(extra))}")
+
+    def vector(name: str) -> tuple[Any, Any]:
+        v = payload.get(name, [0, 0])
+        if not isinstance(v, (list, tuple)) or len(v) != 2:
+            raise ApiError(400, "invalid_input", f"{name} must be [x, y]")
+        return v[0], v[1]
+
+    (mx, my), (ax, ay) = vector("move"), vector("aim")
+    try:
+        return HumanInput(mx, my, ax, ay, payload.get("charge", False))
+    except ValueError as exc:
+        raise ApiError(400, "invalid_input", str(exc)) from exc
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -121,6 +162,11 @@ class Handler(BaseHTTPRequestHandler):
             elif path == "/api/matches":
                 self._allow(method, "POST")
                 self._send(200, run_match(parse_match_request(self._read_json())))
+            elif path == "/api/play":
+                self._allow(method, "POST")
+                self._send(200, start_play(parse_match_request(self._read_json())))
+            elif path.startswith("/api/play/"):
+                self._handle_play(method, path)
             else:
                 raise ApiError(404, "not_found", "no such endpoint")
         except ApiError as exc:
@@ -129,6 +175,23 @@ class Handler(BaseHTTPRequestHandler):
             log.exception("unhandled error serving %s %s", method, self.path)
             msg = "something went wrong on the server"
             self._send(500, {"error": {"code": "internal_error", "message": msg}})
+
+    def _handle_play(self, method: str, path: str) -> None:
+        parts = path.split("/")  # ["", "api", "play", <id>, "step"?]
+        sid = parts[3] if len(parts) > 3 else ""
+        if not _SESSION_ID.fullmatch(sid) or len(parts) > 5:
+            raise ApiError(404, "not_found", "no such endpoint")
+        tail = parts[4] if len(parts) == 5 else None
+        if tail == "step":
+            self._allow(method, "POST")
+            session = STORE.get(sid)
+            self._send(200, session.advance(parse_input(self._read_json()), STORE.clock()))
+        elif tail is None:
+            self._allow(method, "DELETE")
+            STORE.delete(sid)
+            self._send(200, {"deleted": True})
+        else:
+            raise ApiError(404, "not_found", "no such endpoint")
 
     @staticmethod
     def _allow(method: str, expected: str) -> None:
