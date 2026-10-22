@@ -32,8 +32,34 @@ export interface Replay {
 }
 
 export interface MatchRequest {
+  side?: "A" | "B"; // live play: the team you control
   minutes?: number;
   seed?: number;
   opening_server?: "A" | "B";
   settings?: Record<string, number>;
+}
+
+export interface PlayStart {
+  session: string;
+  side: "A" | "B";
+  schema: Replay["schema"];
+  players: string[];
+  frame: number[];
+}
+
+export interface PlayStep {
+  frame: number[];
+  events: ReplayEvent[];
+  finished: boolean;
+  ticks: number;
+  result?: Replay["result"];
+}
+
+export type Vec = [number, number];
+
+/** What the player is doing right now (sent to the server several times a second). */
+export interface Controls {
+  move: Vec;
+  aim: Vec;
+  charge: boolean;
 }

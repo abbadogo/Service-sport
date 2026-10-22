@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Replay } from "../types";
-import { findFrameIndex, formatClock, replayDuration, sampleAt, validateReplay } from "./replay";
+import { blendFrames, findFrameIndex, formatClock, frameWidth, replayDuration, sampleAt, validateReplay } from "./replay";
 
 /** Two players (one a side), three frames at t = 0, 1, 2. */
 function fixture(): Replay {
@@ -46,6 +46,19 @@ describe("sampleAt", () => {
     expect(sampleAt(fixture(), -3).t).toBe(0);
   });
   it("reports duration", () => expect(replayDuration(fixture())).toBe(2));
+});
+
+describe("blendFrames", () => {
+  const { frames, players } = fixture();
+  it("is frame a at k=0 and frame b at k=1, halfway at k=0.5", () => {
+    expect(blendFrames(players, frames[0], frames[1], 0, 0).players[0].x).toBeCloseTo(10);
+    expect(blendFrames(players, frames[0], frames[1], 1, 1).players[0].x).toBeCloseTo(20);
+    expect(blendFrames(players, frames[0], frames[1], 0.5, 0.5).ball?.x).toBeCloseTo(25);
+  });
+  it("does not blend the ball when it is missing from the later frame", () => {
+    expect(blendFrames(players, frames[1], frames[2], 0.5, 1.5).ball?.x).toBeCloseTo(30);
+  });
+  it("knows the frame width", () => expect(frameWidth(2)).toBe(frames[0].length));
 });
 
 describe("validateReplay", () => {

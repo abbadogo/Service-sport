@@ -34,7 +34,7 @@ export function validateReplay(r: Replay): void {
     throw new Error("replay layout does not match this app version");
   }
   if (r.frames.length === 0) throw new Error("replay has no frames");
-  const width = HEAD_LEN + PLAYER_STRIDE * r.players.length;
+  const width = frameWidth(r.players.length);
   if (r.frames.some((f) => f.length !== width)) throw new Error("replay frame has the wrong size");
 }
 
@@ -56,17 +56,14 @@ export function findFrameIndex(frames: number[][], t: number): number {
 
 const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
 
-export function sampleAt(r: Replay, time: number): Snapshot {
-  const t = Math.min(Math.max(time, 0), replayDuration(r));
-  const i = findFrameIndex(r.frames, t);
-  const a = r.frames[i];
-  const b = r.frames[Math.min(i + 1, r.frames.length - 1)];
-  const span = b[H.T] - a[H.T];
-  const k = span > 0 ? (t - a[H.T]) / span : 0;
-  const half = r.players.length / 2;
+export const frameWidth = (players: number) => HEAD_LEN + PLAYER_STRIDE * players;
+
+/** Interpolate between two frames (k = 0 gives frame a, k = 1 gives frame b). */
+export function blendFrames(players: string[], a: number[], b: number[], k: number, t: number): Snapshot {
+  const half = players.length / 2;
   const cursors = [a[H.CURSOR_A], a[H.CURSOR_B]];
 
-  const players = r.players.map((id, n) => {
+  const list = players.map((id, n) => {
     const o = HEAD_LEN + n * PLAYER_STRIDE;
     return {
       id,
@@ -92,7 +89,16 @@ export function sampleAt(r: Replay, time: number): Snapshot {
       }
     : null;
 
-  return { t, phase: a[H.PHASE], clock: a[H.CLOCK], scoreA: a[H.SCORE_A], scoreB: a[H.SCORE_B], ball, players };
+  return { t, phase: a[H.PHASE], clock: a[H.CLOCK], scoreA: a[H.SCORE_A], scoreB: a[H.SCORE_B], ball, players: list };
+}
+
+export function sampleAt(r: Replay, time: number): Snapshot {
+  const t = Math.min(Math.max(time, 0), replayDuration(r));
+  const i = findFrameIndex(r.frames, t);
+  const a = r.frames[i];
+  const b = r.frames[Math.min(i + 1, r.frames.length - 1)];
+  const span = b[H.T] - a[H.T];
+  return blendFrames(r.players, a, b, span > 0 ? (t - a[H.T]) / span : 0, t);
 }
 
 /** Same display rules as the Python clock: countdown, or "SD +mm:ss" in sudden death (negative values). */

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { EventLog } from "./components/EventLog";
+import { PlayView } from "./components/PlayView";
 import { Pitch } from "./components/Pitch";
 import { Scoreboard } from "./components/Scoreboard";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -17,7 +18,7 @@ type Match =
 
 const messageOf = (err: unknown) => (err instanceof ApiRequestError || err instanceof Error ? err.message : "Unexpected error");
 
-export default function App() {
+function WatchView() {
   const [specs, setSpecs] = useState<SettingSpec[]>([]);
   const [specsError, setSpecsError] = useState<string | null>(null);
   const [values, setValues] = useState<Record<string, string>>({});
@@ -69,12 +70,6 @@ export default function App() {
   const snapshot = useMemo(() => (replay ? sampleAt(replay, pb.time) : null), [replay, pb.time]);
 
   return (
-    <main>
-      <header>
-        <h1>Sabis Lab</h1>
-        <p className="muted">Run a match, watch it, change the rules, run it again.</p>
-      </header>
-
       <div className="layout">
         <div>
           <section className="card controls" aria-label="Match options">
@@ -141,6 +136,22 @@ export default function App() {
           <EventLog events={replay?.events ?? []} time={pb.time} onJump={pb.seek} />
         </div>
       </div>
+  );
+}
+
+export default function App() {
+  const [tab, setTab] = useState<"watch" | "play">("play");
+  return (
+    <main>
+      <header>
+        <h1>Sabis Lab</h1>
+        <p className="muted">Play a live match, or run one, watch it, change the rules and run it again.</p>
+        <div role="tablist" className="tabs" aria-label="Mode">
+          <button type="button" role="tab" aria-selected={tab === "play"} onClick={() => setTab("play")}>Play</button>
+          <button type="button" role="tab" aria-selected={tab === "watch"} onClick={() => setTab("watch")}>Watch and tune</button>
+        </div>
+      </header>
+      {tab === "play" ? <PlayView /> : <WatchView />}
     </main>
   );
 }

@@ -47,6 +47,12 @@ angle) are **not yet standardized (draft)**. The engine currently assumes a 7.5 
   end, aimed to die about 10 m short of their baseline. It is a little less accurate and costs the striker extra
   stamina.
 
+## 4b. Playing it yourself (draft)
+
+- A human controls the player nearest the disc on their team (control passes to whoever is closest). Holding the
+  strike button fills the power bar; releasing it swings. A swing with the disc out of reach is a miss. A human's strikes
+  follow the same mishit and long-hit rules as the computer's.
+
 ## 5. Scoring
 
 - When the disc loses speed, wobbles and falls flat on its side, the play is dead. The point is

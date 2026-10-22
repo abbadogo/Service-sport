@@ -6,6 +6,11 @@ All notable changes to this project are documented here.
 
 Verified on Python 3.12: `python -m unittest discover -s tests` ran 62 tests, all passing (about 55 s).
 
+### Added
+- Live play: `human_team` / `HumanInput` in the engine (drive the nearest player, hold-to-charge strike, long hit,
+  swing-and-miss), a session manager and `/api/play` endpoints, and a Play tab in the web app with keyboard and touch
+  controls. 20 new Python tests and web tests for the input, API client and strike button.
+
 ### Fixed
 - CI workflow was rejected by GitHub (`hashFiles` is not allowed in a job-level `if`); removed the condition.
 - Web component tests leaked rendered DOM between tests (no automatic cleanup without Vitest globals); added an

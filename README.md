@@ -57,6 +57,23 @@ Opening the repository in a Codespace (or VS Code "Reopen in Container") uses
 extensions. Nothing else is needed. (This configuration has not been opened in a Codespace by the
 author yet; report any problems.)
 
+## Playing a live match
+
+The **Play** tab in Sabis Lab lets you play Team A against the computer, in real time.
+
+- You drive the player **nearest the disc** (the ringed one); control passes to whoever is closest as the disc moves.
+  The computer plays everyone else.
+- **Move:** WASD, the arrow keys, or the on-screen stick (phones and tablets). You still cannot cross the center line.
+- **Strike:** hold SPACE or the HOLD button to fill the power bar, release to hit. The hit goes the way you last moved.
+  A bar at 90% or more is a long hit. Swinging when the disc is out of reach is a miss, and your swings can mishit
+  (more often when tired).
+- Serves are automatic in this version, for both teams.
+
+How it works: `POST /api/play` starts a session; the browser then calls `POST /api/play/<id>/step` about 20 times a
+second with `{move, aim, charge}`. Each call advances the match by the real time since the previous call (at most 0.25 s),
+so the game keeps its pace whatever the network delay, and returns the newest frame. Sessions expire after 5 idle minutes
+and at most 8 run at once. Engine side: `ServiceMatch(..., human_team=Team.A)` and `step(HumanInput(...))`.
+
 ## Sabis Lab (web app)
 
 A browser app to run a match, watch it on the pitch, change the rules and physics from a settings panel, and
@@ -150,6 +167,11 @@ What has actually been run, and where.
   - Web (Node 22): `npm ci`, `eslint`, `tsc --noEmit`, 27 Vitest tests, `vite build`, `npm audit` (0 vulnerabilities).
 - **Run by hand in a GitHub Codespace:** the same Python and web checks, the API server (`python -m service.api`)
   and the Sabis Lab web app in a browser.
+- **Live play (newest, checked locally only):** the engine control code, session manager and API pass 20 new Python
+  tests; a real-time check kept pace with the wall clock (5.4 s of play simulated 5.3 s); the front-end logic passes a
+  strict typecheck and a contract check against real server frames. The Play screen (React components, joystick, strike
+  button, keyboard handling) has **not** been run in a browser or by `npm run lint`/`typecheck`/`test`, and CI has not
+  yet run on these changes.
 - **Not covered by automated tests:** the browser UI end to end (there are tests for the logic, the API client and the
   settings panel, but none that drive the whole app), and the game's balance (see below).
 - **No lockfile for the Python dev tools:** the engine has no runtime dependencies. Versions in
@@ -166,7 +188,9 @@ What has actually been run, and where.
 - Mishit rates, the strike-aim habits and the bevel strength are tuning guesses, not measurements from real play.
 - Balance numbers come from small samples (16 matches); treat them as indicative.
 - The full test suite takes about 30 s because several tests play whole matches.
-- Single process only; no multiplayer, persistence or networking yet.
+- Live play uses plain HTTP polling (about 20 requests a second), so it feels best on a fast, low-latency connection; a
+  WebSocket connection would be smoother. You play Team A only, serves are automatic, and there is no sound.
+- Single process only; no accounts, persistence or online play against other people yet.
 - Balance statistics came from small samples (8 to 30 matches), so treat them as indicative.
 
 ## Troubleshooting
