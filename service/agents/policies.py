@@ -130,12 +130,12 @@ class DefaultStrikePolicy:
         kick = math.radians(r.uniform(0.0, 2.5)) * r.choice((-1.0, 1.0))
         recover = self.RECOVER_MAX_RAD * quality
         target = Vec2(x_t, y_t)
-        d = self._compensate_curve(ball, d.normalized(), speed, recover, kick, target)
+        d = self.compensate_curve(ball, d.normalized(), speed, recover, kick, target)
         err = r.gauss(0.0, self.cfg.aim_error_for(level) + 0.04 * (1.0 - quality))
         return StrikeImpulse(d.rotated(err).normalized(), speed, recover, kick)
 
-    def _compensate_curve(self, ball: TireBall, d: Vec2, speed: float, recover: float,
-                          kick: float, target: Vec2) -> Vec2:
+    def compensate_curve(self, ball: TireBall, d: Vec2, speed: float, recover: float,
+                         kick: float, target: Vec2, skill: float | None = None) -> Vec2:
         """Aim off-line so the ball comes to rest in the chosen lane.
 
         The bevel bends every roll the same way and the bend tightens as the ball
@@ -151,5 +151,5 @@ class DefaultStrikePolicy:
             end = eng.predict(sim, 10.0, 1 / 20).points[-1]
             got = (Vec2(end.x, end.y) - origin).angle()
             want = (Vec2(end.x, target.y) - origin).angle()
-            d = d.rotated((want - got) * self.curve_skill)
+            d = d.rotated((want - got) * (self.curve_skill if skill is None else skill))
         return d

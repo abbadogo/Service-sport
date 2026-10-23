@@ -64,8 +64,10 @@ The **Play** tab in Sabis Lab lets you play Team A against the computer, in real
 - You drive the player **nearest the disc** (the ringed one); control passes to whoever is closest as the disc moves.
   The computer plays everyone else.
 - **Move:** WASD, the arrow keys, or the on-screen stick (phones and tablets). You still cannot cross the center line.
-- **Strike:** hold SPACE or the HOLD button to fill the power bar, release to hit. The hit goes the way you last moved.
-  A bar at 90% or more is a long hit. Swinging when the disc is out of reach is a miss, and your swings can mishit
+- **Strike:** hold SPACE or the HOLD button to fill the power bar, release to hit. The disc goes straight at the other
+  team; push the stick up or down (W/S) as you release to angle it, up to about 35 degrees. A bar at 90% or more is a long hit.
+  Swings are forgiving (your reach grows with the disc's speed) and a straight hit is corrected for the bevel's curve; both
+  are adjustable under "Playing yourself" in the settings. Swinging when the disc is out of reach is a miss, and your swings can mishit
   (more often when tired).
 - Serves are automatic in this version, for both teams.
 

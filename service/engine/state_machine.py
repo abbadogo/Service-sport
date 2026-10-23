@@ -108,6 +108,7 @@ class ServiceMatch:
         self.stamina_cfg = stamina_config or StaminaConfig()
         self.strike_cfg = strike_config or StrikeConfig()
         self.serve_policy: ServePolicy = serve_policy or DefaultServePolicy(random.Random(seed * 7919 + 2))
+        self._assist = DefaultStrikePolicy(random.Random(seed * 7919 + 7), self.strike_cfg, self.engine)
         self.strike_policy: StrikePolicy = strike_policy or DefaultStrikePolicy(
             random.Random(seed * 7919 + 3), self.strike_cfg, self.engine)
 
@@ -388,21 +389,28 @@ class ServiceMatch:
             self._swing(p, ball, bar.release(self.strike_cfg.min_level), human)
 
     def _swing(self, p: Player, ball: TireBall, level: float, human: HumanInput | None) -> None:
-        if not self.referee.validate_strike(p, ball.x, ball.y, ball.is_live).ok:
+        cfg = self.strike_cfg
+        # A forgiving swing: reach grows with the ball's speed, covering lag and timing.
+        grace = ball.speed * cfg.human_swing_grace_s
+        if not self.referee.validate_strike(p, ball.x, ball.y, ball.is_live, reach_bonus=grace).ok:
             p.strike_cooldown = self.STRIKE_COOLDOWN_S  # swung at nothing
             self._emit(SwingMissed, team=p.team, player_id=p.pid)
             return
-        aim = Vec2(human.aim_x, human.aim_y) if human else Vec2(0.0, 0.0)
+        # The hit goes straight at the other team; only the stick's up/down push angles it.
         sign = p.team.forward_sign
-        if aim.length_sq() < 1e-6:
-            aim = Vec2(sign, 0.0)
-        forward = sign * max(aim.x * sign, 0.3 * aim.length())  # never strike backwards
+        lateral = clamp(human.aim_y, -1.0, 1.0) if human else 0.0
+        direction = Vec2(sign, lateral * cfg.human_max_lateral).normalized()
         quality = clamp(0.65 + 0.35 * p.speed_factor, 0.0, 1.0)
-        err = self._rng.gauss(0.0, self.strike_cfg.aim_error_for(level) + 0.04 * (1.0 - quality))
-        impulse = StrikeImpulse(Vec2(forward, aim.y).normalized().rotated(err),
-                                self.strike_cfg.speed_for(level) * p.strength,
-                                DefaultStrikePolicy.RECOVER_MAX_RAD * quality, 0.0)
-        self._execute_strike(p, ball, impulse, level)
+        recover = DefaultStrikePolicy.RECOVER_MAX_RAD * quality
+        # A normal hit cannot leave over the far baseline (the long hit is range-matched separately).
+        speed = min(cfg.speed_for(level) * p.strength,
+                    long_hit_speed(p.team, ball.x, direction, cfg.human_range_margin_m))
+        # Aim assist: bend the hit so the bevel's curve brings the disc to the chosen lane.
+        lane_y = clamp(ball.y + lateral * cfg.human_lane_m, 4.0, PITCH_WIDTH_M - 4.0)
+        direction = self._assist.compensate_curve(ball, direction, speed, recover, 0.0,
+                                                  Vec2(ball.x, lane_y), skill=cfg.human_aim_assist)
+        err = self._rng.gauss(0.0, cfg.aim_error_for(level) + 0.04 * (1.0 - quality))
+        self._execute_strike(p, ball, StrikeImpulse(direction.rotated(err), speed, recover, 0.0), level)
 
     def _execute_strike(self, p: Player, ball: TireBall, impulse: StrikeImpulse, level: float) -> None:
         """Apply a strike: the mishit and long-hit rules, bookkeeping and events (AI and human alike)."""

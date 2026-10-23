@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { isMoveKey, keysToVector, strongest, updateAim } from "../lib/input";
+import { isMoveKey, keysToVector, strongest } from "../lib/input";
 import type { Snapshot } from "../lib/replay";
 import { validateMinutes } from "../lib/settings";
 import { usePlay } from "../lib/usePlay";
@@ -15,14 +15,13 @@ export function PlayView() {
   const keys = useRef(new Set<string>());
   const stick = useRef<Vec>([0, 0]);
   const touchCharge = useRef(false);
-  const aim = useRef<Vec>([1, 0]);
   const [minutes, setMinutes] = useState("2");
   const [snap, setSnap] = useState<Snapshot | null>(null);
 
   const getControls = useCallback((): Controls => {
     const move = strongest(keysToVector(keys.current), stick.current);
-    aim.current = updateAim(aim.current, move);
-    return { move, aim: aim.current, charge: touchCharge.current || keys.current.has("Space") };
+    // The hit goes straight at the other team; pushing up or down as you release angles it.
+    return { move, aim: move, charge: touchCharge.current || keys.current.has("Space") };
   }, []);
 
   const { status, error, events, side, result, start, stop, snapshot } = usePlay(getControls);
@@ -93,7 +92,8 @@ export function PlayView() {
         <Pitch snapshot={snap} />
         <p className="muted">
           {me ? `You are ${me.id} (the ringed player). ` : ""}Move: WASD, arrow keys or the stick. Hold SPACE or the button to charge the power
-          bar, release to hit. A full bar is a long hit. Serves are automatic in this version.
+          bar, release to hit: the disc goes straight at the other team, and pushing up or down as you release angles it.
+          A full bar is a long hit. Serves are automatic in this version.
         </p>
 
         <div className="pad">

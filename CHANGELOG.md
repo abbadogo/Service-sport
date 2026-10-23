@@ -4,7 +4,12 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
-Verified on Python 3.12: `python -m unittest discover -s tests` ran 62 tests, all passing (about 55 s).
+Verified on Python 3.12: `python -m unittest discover -s tests` ran 88 tests, all passing (about 45 s).
+
+### Changed
+- Live play hits: aim is now the stick's up/down push at release (straight at the other team by default; it used to
+  follow where you last moved, which sent most hits sideways), the swing reaches farther for a faster disc, a hit is
+  corrected for the bevel's pull, and a normal hit cannot leave over the far baseline.
 
 ### Added
 - Live play: `human_team` / `HumanInput` in the engine (drive the nearest player, hold-to-charge strike, long hit,

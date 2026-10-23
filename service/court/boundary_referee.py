@@ -195,7 +195,7 @@ class BoundaryReferee:
 
     # -------------------------------------------------------------- strike
     def validate_strike(self, player: PlayerLike, ball_x: float, ball_y: float,
-                        ball_is_live: bool) -> Verdict:
+                        ball_is_live: bool, reach_bonus: float = 0.0) -> Verdict:
         faults: list[FaultCode] = []
         if not ball_is_live:
             faults.append(FaultCode.STRIKE_BALL_DEAD)
@@ -203,7 +203,7 @@ class BoundaryReferee:
             faults.append(FaultCode.STRIKE_PLAYER_OUT_OF_ZONE)
         if not (self._zones[player.team].x_min <= ball_x <= self._zones[player.team].x_max):
             faults.append(FaultCode.STRIKE_BALL_ON_OPPONENT_SIDE)
-        if math.hypot(player.pos.x - ball_x, player.pos.y - ball_y) > player.reach:
+        if math.hypot(player.pos.x - ball_x, player.pos.y - ball_y) > player.reach + reach_bonus:
             faults.append(FaultCode.STRIKE_OUT_OF_REACH)
         return Verdict(tuple(faults))
 

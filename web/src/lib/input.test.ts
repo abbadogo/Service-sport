@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isMoveKey, keysToVector, stickVector, strongest, updateAim } from "./input";
+import { isMoveKey, keysToVector, stickVector, strongest } from "./input";
 
 describe("keysToVector", () => {
   it("maps WASD and arrow keys to screen directions", () => {
@@ -35,12 +35,7 @@ describe("stickVector", () => {
   it("handles a zero radius", () => expect(stickVector(10, 10, 0)).toEqual([0, 0]));
 });
 
-describe("strongest / updateAim", () => {
+describe("strongest", () => {
   it("picks the harder push", () => expect(strongest([0.2, 0], [0, -0.9])).toEqual([0, -0.9]));
-  it("aims where you last moved, and keeps the aim when you stop", () => {
-    const moved = updateAim([1, 0], [0, -2]);
-    expect(moved).toEqual([0, -1]);
-    expect(updateAim(moved, [0, 0])).toEqual([0, -1]);
-    expect(updateAim([1, 0], [0.1, 0.1])).toEqual([1, 0]); // too small to count
-  });
+  it("keeps the first when equal", () => expect(strongest([1, 0], [0, 1])).toEqual([1, 0]));
 });

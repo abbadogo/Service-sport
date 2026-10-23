@@ -38,8 +38,3 @@ export function stickVector(dx: number, dy: number, radius: number, deadZone = 0
 /** Whichever of two inputs is pushed harder (so keyboard and touch can be used together). */
 export const strongest = (a: Vec, b: Vec): Vec => (length(a) >= length(b) ? a : b);
 
-/** The strike direction follows where you last moved; with no movement it keeps pointing the same way. */
-export function updateAim(previous: Vec, move: Vec): Vec {
-  const len = length(move);
-  return len > 0.3 ? [move[0] / len, move[1] / len] : previous;
-}

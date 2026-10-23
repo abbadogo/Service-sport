@@ -52,6 +52,9 @@ angle) are **not yet standardized (draft)**. The engine currently assumes a 7.5 
 - A human controls the player nearest the disc on their team (control passes to whoever is closest). Holding the
   strike button fills the power bar; releasing it swings. A swing with the disc out of reach is a miss. A human's strikes
   follow the same mishit and long-hit rules as the computer's.
+- The hit goes straight at the other team; the stick's up or down push angles it. A normal hit cannot leave over the
+  far baseline. The swing reaches farther the faster the disc moves, and a hit is corrected for the bevel's sideways pull
+  (both adjustable).
 
 ## 5. Scoring
 

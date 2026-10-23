@@ -111,6 +111,12 @@ class StrikeConfig:
     long_hit_depth_m: float = 10.0       # aim to die this far short of the opponent's baseline
     long_hit_stamina_cost: float = 0.06  # on top of the normal strike cost
     long_hit_aim_error_rad: float = 0.04  # extra aim error on a long hit
+    # Playing it yourself (draft): forgiving swings and aimed hits.
+    human_swing_grace_s: float = 0.25   # swing reach grows by ball speed x this, to cover lag and timing
+    human_aim_assist: float = 0.9       # 0 = the bevel bends your hit, 1 = a straight hit stays straight
+    human_max_lateral: float = 0.7      # sideways share of a fully angled hit (0.7 is about 35 degrees)
+    human_lane_m: float = 18.0          # how far sideways a fully angled hit comes to rest
+    human_range_margin_m: float = 3.0   # a normal hit stops at least this far short of the far baseline
 
     def __post_init__(self) -> None:
         _require(self.charge_time_s > 0.0, "charge_time_s must be > 0")
@@ -118,6 +124,10 @@ class StrikeConfig:
         _require(0.0 <= self.min_level <= 1.0, "min_level in [0,1]")
         _require(0.0 < self.min_speed <= self.max_speed, "need 0 < min_speed <= max_speed")
         _require(0.0 < self.long_hit_level <= 1.0, "long_hit_level in (0,1]")
+        _require(self.human_swing_grace_s >= 0.0 and 0.0 <= self.human_aim_assist <= 1.0,
+                 "human grace >= 0 and assist in [0,1]")
+        _require(0.0 <= self.human_max_lateral <= 2.0 and self.human_lane_m >= 0.0
+                 and self.human_range_margin_m >= 0.0, "human aim values out of range")
         _require(self.long_hit_depth_m >= 0.0 and self.long_hit_stamina_cost >= 0.0,
                  "long hit values must be >= 0")
 
