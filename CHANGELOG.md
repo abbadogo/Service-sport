@@ -6,6 +6,10 @@ All notable changes to this project are documented here.
 
 Verified on Python 3.12: `python -m unittest discover -s tests` ran 88 tests, all passing (about 45 s).
 
+### Fixed (CI)
+- The npm audit step is retried up to three times and each CI job has a 15-minute time limit, after run #46 failed once
+  on a registry error (`400 Invalid package tree`) that did not recur with the same lockfile.
+
 ### Changed
 - Live play hits: aim is now the stick's up/down push at release (straight at the other team by default; it used to
   follow where you last moved, which sent most hits sideways), the swing reaches farther for a faster disc, a hit is

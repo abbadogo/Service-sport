@@ -164,11 +164,15 @@ without touching the match loop.
 
 What has actually been run, and where.
 
-- **GitHub Actions (CI workflow), on pushes to `main`, as of commit `df69924` (run #45, 2026-10-22): passing.**
+- **GitHub Actions (CI workflow), on pushes to `main`, as of commit `815a177` (run #47, 2026-10-23): passing.**
   - Python 3.11 and 3.12: `ruff check .`, `mypy`, 62 unit tests, `python -m build`, `pip-audit`.
   - Web (Node 22): `npm ci`, `eslint`, `tsc --noEmit`, 27 Vitest tests, `vite build`, `npm audit` (0 vulnerabilities).
 - **Run by hand in a GitHub Codespace:** the same Python and web checks, the API server (`python -m service.api`)
   and the Sabis Lab web app in a browser.
+- **One red run in the history (#46, 2026-10-22):** a documentation-only commit failed at `npm audit` with an error from
+  the npm registry (`400 Invalid package tree`) after every other step passed. The same lockfile passed in the runs
+  before and after, so it was treated as a transient registry fault; the audit step now retries up to three times (a real
+  vulnerability still fails it) and each job has a 15-minute limit.
 - **Live play:** covered by the CI run above (20 Python tests for the engine control code, session manager and API; web
   tests for the input logic, API client and strike button). A real-time check against a live server kept pace with the
   wall clock (5.4 s of play simulated 5.3 s). The Play screen has not yet been played on a phone or in a browser by the
