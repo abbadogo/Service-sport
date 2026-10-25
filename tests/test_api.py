@@ -32,7 +32,8 @@ class ApiTestCase(unittest.TestCase):
             with urllib.request.urlopen(req, timeout=60) as resp:
                 return resp.status, json.loads(resp.read())
         except urllib.error.HTTPError as err:
-            return err.code, json.loads(err.read())
+            with err:  # close the error response so no socket is left open
+                return err.code, json.loads(err.read())
 
 
 class EndpointTests(ApiTestCase):

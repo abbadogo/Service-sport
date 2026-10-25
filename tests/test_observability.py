@@ -73,7 +73,8 @@ class ServerObservabilityTests(unittest.TestCase):
             with urllib.request.urlopen(req, timeout=30) as resp:
                 return resp.status, dict(resp.headers), json.loads(resp.read())
         except urllib.error.HTTPError as err:
-            return err.code, dict(err.headers), json.loads(err.read())
+            with err:
+                return err.code, dict(err.headers), json.loads(err.read())
 
     def test_metrics_endpoint_has_the_expected_keys_and_health_still_works(self):
         self.assertEqual(self.get("/api/health")[0], 200)

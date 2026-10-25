@@ -119,7 +119,8 @@ class PlayHttpTests(unittest.TestCase):
             with urllib.request.urlopen(req, timeout=30) as resp:
                 return resp.status, json.loads(resp.read())
         except urllib.error.HTTPError as err:
-            return err.code, json.loads(err.read())
+            with err:
+                return err.code, json.loads(err.read())
 
     def start(self, **extra):
         status, body = self.call("POST", "/api/play", {"minutes": 1, "seed": 2, **extra})
