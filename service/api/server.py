@@ -13,12 +13,16 @@ import logging
 import math
 import re
 import threading
+import time
+import uuid
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 from service import __version__
 from service.api.errors import ApiError
+from service.api.logging_setup import configure_logging
+from service.api.metrics import Metrics
 from service.api.play import SessionStore
 from service.api.settings import SettingsError, build_configs, match_fields, public_specs
 from service.core.config import MatchConfig
@@ -91,14 +95,30 @@ def run_match(req: MatchRequest) -> dict[str, Any]:
     if not _slots.acquire(blocking=False):
         raise ApiError(503, "busy", "the server is running other matches; try again shortly")
     try:
-        return record_match(ServiceMatch(config, physics_config=physics, strike_config=strike,
-                                         stamina_config=stamina))
+        replay = record_match(ServiceMatch(config, physics_config=physics, strike_config=strike,
+                                           stamina_config=stamina))
+        METRICS.count("matches_run")
+        return replay
     finally:
         _slots.release()
 
 
 STORE = SessionStore()
+METRICS = Metrics()
 _SESSION_ID = re.compile(r"[A-Za-z0-9_-]{8,32}")
+_KNOWN_ROUTES = {"/api/health", "/api/settings", "/api/metrics", "/api/matches", "/api/play"}
+_PLAY_ROUTE = re.compile(r"/api/play/[A-Za-z0-9_-]{8,32}(/step)?")
+
+
+def route_of(path: str) -> str:
+    """A safe name for the route, never the raw path: session ids are secrets and junk paths are untrusted."""
+    path = path.split("?", 1)[0]
+    if path in _KNOWN_ROUTES:
+        return path
+    m = _PLAY_ROUTE.fullmatch(path)
+    if m:
+        return "/api/play/{id}/step" if m.group(1) else "/api/play/{id}"
+    return "unknown"
 
 
 def start_play(req: MatchRequest) -> dict[str, Any]:
@@ -112,6 +132,7 @@ def start_play(req: MatchRequest) -> dict[str, Any]:
     match = ServiceMatch(config, physics_config=physics, strike_config=strike,
                          stamina_config=stamina, human_team=req.side)
     session_id, session = STORE.create(match, req.side)
+    METRICS.count("live_sessions_started")
     return {"session": session_id, **session.start_payload()}
 
 
@@ -141,21 +162,36 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, format: str, *args: Any) -> None:  # noqa: A002 - stdlib signature
         log.debug("%s - %s", self.address_string(), format % args)
 
+    _rid = "-"
+    _status = 500
+
     def _send(self, status: int, body: dict[str, Any]) -> None:
+        self._status = status
         data = json.dumps(body, separators=(",", ":")).encode()
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(data)))
         self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Request-Id", self._rid)
         self.end_headers()
         self.wfile.write(data)
 
+    def _error(self, status: int, code: str, message: str) -> None:
+        self._send(status, {"error": {"code": code, "message": message, "request_id": self._rid}})
+
     def _handle(self, method: str) -> None:
+        self._rid = uuid.uuid4().hex[:12]
+        self._status = 500
+        started = time.monotonic()
+        route = route_of(self.path)
         try:
             path = self.path.split("?", 1)[0]
             if path == "/api/health":
                 self._allow(method, "GET")
                 self._send(200, {"status": "ok", "version": __version__})
+            elif path == "/api/metrics":
+                self._allow(method, "GET")
+                self._send(200, METRICS.snapshot(active_sessions=len(STORE)))
             elif path == "/api/settings":
                 self._allow(method, "GET")
                 self._send(200, {"settings": public_specs()})
@@ -170,11 +206,17 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 raise ApiError(404, "not_found", "no such endpoint")
         except ApiError as exc:
-            self._send(exc.status, {"error": {"code": exc.code, "message": exc.message}})
+            self._error(exc.status, exc.code, exc.message)
         except Exception:  # noqa: BLE001 - last-resort guard; details go to the log, not the client
-            log.exception("unhandled error serving %s %s", method, self.path)
-            msg = "something went wrong on the server"
-            self._send(500, {"error": {"code": "internal_error", "message": msg}})
+            log.exception("unhandled error", extra={"rid": self._rid, "method": method, "route": route})
+            self._error(500, "internal_error", "something went wrong on the server")
+        finally:
+            ms = (time.monotonic() - started) * 1000.0
+            METRICS.observe_request(self._status, ms)
+            log.info("request rid=%s method=%s route=%s status=%d ms=%.1f",
+                     self._rid, method, route, self._status, ms,
+                     extra={"rid": self._rid, "method": method, "route": route,
+                            "status": self._status, "ms": round(ms, 1)})
 
     def _handle_play(self, method: str, path: str) -> None:
         parts = path.split("/")  # ["", "api", "play", <id>, "step"?]
@@ -234,8 +276,10 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="service-api", description="Run the Sabis Lab API server.")
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--port", type=int, default=8000)
+    p.add_argument("--log-format", choices=["text", "json"], default="text",
+                   help="text, or one JSON object per line")
     args = p.parse_args(argv)
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    configure_logging(args.log_format)
     server = make_server(args.host, args.port)
     log.info("Sabis Lab API listening on http://%s:%d", args.host, args.port)
     try:

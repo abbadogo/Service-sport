@@ -47,6 +47,8 @@ python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -e .                 # installs the engine (no third-party packages)
 pip install -r requirements-dev.txt   # only needed for lint, type check, build, audit
+python -m unittest discover -s tests  # run the tests (about a minute)
+python -m service --minutes 2 --events   # play a simulated match
 ```
 
 ### GitHub Codespaces / dev container
@@ -76,6 +78,13 @@ second with `{move, aim, charge}`. Each call advances the match by the real time
 so the game keeps its pace whatever the network delay, and returns the newest frame. Sessions expire after 5 idle minutes
 and at most 8 run at once. Engine side: `ServiceMatch(..., human_team=Team.A)` and `step(HumanInput(...))`.
 
+### Logs and metrics
+
+Each request gets an id (response header `X-Request-Id`, repeated as `request_id` in error bodies) and is logged with its
+method, route, status and time. Session ids are secrets, so they are never logged (the route appears as
+`/api/play/{id}/step`). `python -m service.api --log-format json` prints one JSON object per line. `GET /api/metrics`
+returns in-process counters (reset on restart); it exposes counts only.
+
 ## Sabis Lab (web app)
 
 A browser app to run a match, watch it on the pitch, change the rules and physics from a settings panel, and
@@ -92,7 +101,8 @@ npm install        # first time only; commit the generated package-lock.json
 npm run dev
 ```
 
-API (JSON): `GET /api/health`, `GET /api/settings` (the editable settings, with ranges and defaults),
+API (JSON): `GET /api/health`, `GET /api/metrics` (request counts, latency, matches run, live sessions),
+`GET /api/settings` (the editable settings, with ranges and defaults),
 `POST /api/matches` with `{"minutes", "seed", "opening_server", "settings": {...}}` returning a replay. All input is
 validated on the server; unknown or out-of-range values return a 400 with a message. To make another rule or
 physics value editable, add one entry to `service/api/settings.py`; the panel in the web app picks it up.

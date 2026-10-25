@@ -4,7 +4,12 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
-Verified on Python 3.12: `python -m unittest discover -s tests` ran 88 tests, all passing (about 45 s).
+Verified on Python 3.12: `python -m unittest discover -s tests` ran 96 tests, all passing (about 40 s).
+
+### Added (observability)
+- API request logging with request ids, method, route, status and latency (session ids are never logged), an optional
+  JSON log format (`--log-format json`), and `GET /api/metrics` with request, latency, match and live-session counters.
+  8 new tests.
 
 ### Fixed (CI)
 - The npm audit step is retried up to three times and each CI job has a 15-minute time limit, after run #46 failed once
