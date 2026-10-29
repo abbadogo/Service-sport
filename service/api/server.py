@@ -164,9 +164,20 @@ class Handler(BaseHTTPRequestHandler):
 
     _rid = "-"
     _status = 500
+    _method = "-"
+    _route = "unknown"
+    _started = 0.0
 
     def _send(self, status: int, body: dict[str, Any]) -> None:
         self._status = status
+        # Record the request BEFORE the reply goes out, so that by the time a client has its response the
+        # log line and the metrics already include it (the other order races with whoever reads them next).
+        ms = (time.monotonic() - self._started) * 1000.0
+        METRICS.observe_request(status, ms)
+        log.info("request rid=%s method=%s route=%s status=%d ms=%.1f",
+                 self._rid, self._method, self._route, status, ms,
+                 extra={"rid": self._rid, "method": self._method, "route": self._route,
+                        "status": status, "ms": round(ms, 1)})
         data = json.dumps(body, separators=(",", ":")).encode()
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
@@ -182,8 +193,9 @@ class Handler(BaseHTTPRequestHandler):
     def _handle(self, method: str) -> None:
         self._rid = uuid.uuid4().hex[:12]
         self._status = 500
-        started = time.monotonic()
-        route = route_of(self.path)
+        self._method = method
+        self._route = route_of(self.path)
+        self._started = time.monotonic()
         try:
             path = self.path.split("?", 1)[0]
             if path == "/api/health":
@@ -208,15 +220,8 @@ class Handler(BaseHTTPRequestHandler):
         except ApiError as exc:
             self._error(exc.status, exc.code, exc.message)
         except Exception:  # noqa: BLE001 - last-resort guard; details go to the log, not the client
-            log.exception("unhandled error", extra={"rid": self._rid, "method": method, "route": route})
+            log.exception("unhandled error", extra={"rid": self._rid, "method": method, "route": self._route})
             self._error(500, "internal_error", "something went wrong on the server")
-        finally:
-            ms = (time.monotonic() - started) * 1000.0
-            METRICS.observe_request(self._status, ms)
-            log.info("request rid=%s method=%s route=%s status=%d ms=%.1f",
-                     self._rid, method, route, self._status, ms,
-                     extra={"rid": self._rid, "method": method, "route": route,
-                            "status": self._status, "ms": round(ms, 1)})
 
     def _handle_play(self, method: str, path: str) -> None:
         parts = path.split("/")  # ["", "api", "play", <id>, "step"?]

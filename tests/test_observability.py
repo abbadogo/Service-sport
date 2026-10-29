@@ -1,12 +1,13 @@
 import json
 import logging
+import sys
 import threading
 import unittest
 import urllib.error
 import urllib.request
 
 from service.api import server
-from service.api.logging_setup import JsonFormatter
+from service.api.logging_setup import JsonFormatter, configure_logging
 from service.api.metrics import Metrics
 from service.api.play import SessionStore
 
@@ -51,6 +52,34 @@ class JsonFormatterTests(unittest.TestCase):
         self.assertTrue(out["ts"].endswith("Z"))
 
 
+class ConfigureLoggingTests(unittest.TestCase):
+    def setUp(self) -> None:
+        root = logging.getLogger()
+        self._saved = (root.handlers[:], root.level)
+
+    def tearDown(self) -> None:
+        root = logging.getLogger()
+        root.handlers[:] = self._saved[0]
+        root.setLevel(self._saved[1])
+
+    def test_json_and_text_formats_and_no_duplicate_handlers(self):
+        root = logging.getLogger()
+        configure_logging("json")
+        self.assertIsInstance(root.handlers[0].formatter, JsonFormatter)
+        configure_logging("text")
+        self.assertEqual(len(root.handlers), 1)  # replaced, not stacked
+        self.assertNotIsInstance(root.handlers[0].formatter, JsonFormatter)
+        self.assertEqual(root.level, logging.INFO)
+
+    def test_json_formatter_includes_the_traceback_of_an_error(self):
+        try:
+            raise ValueError("boom")
+        except ValueError:
+            rec = logging.LogRecord("service.api", logging.ERROR, __file__, 1, "failed", (), sys.exc_info())
+        out = json.loads(JsonFormatter().format(rec))
+        self.assertIn("ValueError: boom", out["exc"])
+
+
 class ServerObservabilityTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -93,6 +122,15 @@ class ServerObservabilityTests(unittest.TestCase):
         self.assertEqual(after["responses"]["4xx"] - before["responses"]["4xx"], 1)
         self.assertEqual(after["live_sessions"]["started"] - before["live_sessions"]["started"], 1)
         self.assertEqual(after["live_sessions"]["active"], 1)
+
+    def test_a_request_is_counted_before_its_reply_reaches_the_client(self):
+        """Regression: the server used to log and count AFTER replying, so whoever read the metrics or the
+        log next could miss it (a flaky test under load). Now the count is exact, every time."""
+        for _ in range(40):
+            first = self.get("/api/metrics")[2]["requests_total"]
+            self.get("/api/health")
+            second = self.get("/api/metrics")[2]["requests_total"]
+            self.assertEqual(second - first, 2)  # the first metrics call plus the health call
 
     def test_every_response_carries_a_request_id_and_errors_repeat_it(self):
         status, headers, _ = self.get("/api/health")
