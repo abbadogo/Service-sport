@@ -138,6 +138,7 @@ persistent component is added, a `.env.example` will be added with it.
 | Purpose | Command |
 |---|---|
 | Tests | `python -m unittest discover -s tests -v` |
+| Tests with coverage (CI fails below 90%) | `coverage run -m unittest discover -s tests && coverage report` |
 | Lint | `ruff check .` |
 | Type check | `mypy` |
 | Build package | `python -m build` |

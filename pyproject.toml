@@ -34,3 +34,11 @@ disallow_untyped_defs = true
 check_untyped_defs = true
 warn_unused_ignores = true
 warn_redundant_casts = true
+
+[tool.coverage.run]
+source = ["service"]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+skip_covered = true

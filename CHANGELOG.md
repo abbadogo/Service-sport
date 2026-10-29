@@ -6,6 +6,14 @@ All notable changes to this project are documented here.
 
 Verified on Python 3.12: `python -m unittest discover -s tests` ran 96 tests, all passing (about 40 s).
 
+### Added (quality gate)
+- Coverage gate: CI runs the tests under `coverage` and fails if coverage of `service` falls below 90%
+  (it was 95% when the gate was added).
+
+### Fixed (API)
+- A request is now logged and counted before its reply is sent. Before, a client that read the log or
+  the metrics right after a reply could miss it, which made a test flaky under load.
+
 ### Added (observability)
 - API request logging with request ids, method, route, status and latency (session ids are never logged), an optional
   JSON log format (`--log-format json`), and `GET /api/metrics` with request, latency, match and live-session counters.
