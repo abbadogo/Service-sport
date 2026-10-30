@@ -3,7 +3,7 @@
 A deterministic, headless simulation of **Sabis** (also called "Service"), a street game from Kano, northern Nigeria: a custom
 slipper-cut disc (bevelled with a Peak Milk can lid) is rolled like a tyre and kept upright by
 stick strikes. When it falls flat, a point is scored against the side it fell on. Written in
-standard-library Python, with no GUI.
+standard-library Python; the engine has no GUI. An optional browser app, Sabis Lab, sits on top of it (see below).
 
 ## Features
 
@@ -58,54 +58,6 @@ Opening the repository in a Codespace (or VS Code "Reopen in Container") uses
 `pip install -r requirements-dev.txt` run automatically, with the Python, Ruff and mypy
 extensions. Nothing else is needed. (This configuration has not been opened in a Codespace by the
 author yet; report any problems.)
-
-## Playing a live match
-
-The **Play** tab in Sabis Lab lets you play Team A against the computer, in real time.
-
-- You drive the player **nearest the disc** (the ringed one); control passes to whoever is closest as the disc moves.
-  The computer plays everyone else.
-- **Move:** WASD, the arrow keys, or the on-screen stick (phones and tablets). You still cannot cross the center line.
-- **Strike:** hold SPACE or the HOLD button to fill the power bar, release to hit. The disc goes straight at the other
-  team; push the stick up or down (W/S) as you release to angle it, up to about 35 degrees. A bar at 90% or more is a long hit.
-  Swings are forgiving (your reach grows with the disc's speed) and a straight hit is corrected for the bevel's curve; both
-  are adjustable under "Playing yourself" in the settings. Swinging when the disc is out of reach is a miss, and your swings can mishit
-  (more often when tired).
-- Serves are automatic in this version, for both teams.
-
-How it works: `POST /api/play` starts a session; the browser then calls `POST /api/play/<id>/step` about 20 times a
-second with `{move, aim, charge}`. Each call advances the match by the real time since the previous call (at most 0.25 s),
-so the game keeps its pace whatever the network delay, and returns the newest frame. Sessions expire after 5 idle minutes
-and at most 8 run at once. Engine side: `ServiceMatch(..., human_team=Team.A)` and `step(HumanInput(...))`.
-
-### Logs and metrics
-
-Each request gets an id (response header `X-Request-Id`, repeated as `request_id` in error bodies) and is logged with its
-method, route, status and time. Session ids are secrets, so they are never logged (the route appears as
-`/api/play/{id}/step`). `python -m service.api --log-format json` prints one JSON object per line. `GET /api/metrics`
-returns in-process counters (reset on restart); it exposes counts only.
-
-## Sabis Lab (web app)
-
-A browser app to run a match, watch it on the pitch, change the rules and physics from a settings panel, and
-run it again. The Python engine stays the single source of truth: a small standard-library server runs matches
-and the React + TypeScript app (in `web/`) displays them.
-
-```bash
-# terminal 1: the engine API (http://127.0.0.1:8000)
-python -m service.api
-
-# terminal 2: the web app (http://localhost:5173), forwards /api to the server
-cd web
-npm install        # first time only; commit the generated package-lock.json
-npm run dev
-```
-
-API (JSON): `GET /api/health`, `GET /api/metrics` (request counts, latency, matches run, live sessions),
-`GET /api/settings` (the editable settings, with ranges and defaults),
-`POST /api/matches` with `{"minutes", "seed", "opening_server", "settings": {...}}` returning a replay. All input is
-validated on the server; unknown or out-of-range values return a 400 with a message. To make another rule or
-physics value editable, add one entry to `service/api/settings.py`; the panel in the web app picks it up.
 
 ## Usage
 
@@ -170,6 +122,54 @@ scripts/     developer tools: balance.py, quick_rate.py, record_replay.py (not p
 Layers depend downwards: `engine` uses `agents`, `court` and `physics`; `court` uses only `core`.
 Serve and strike behaviour are plug-in policies, so AI or human controllers can be swapped in
 without touching the match loop.
+
+## Playing a live match
+
+The **Play** tab in Sabis Lab lets you play Team A against the computer, in real time.
+
+- You drive the player **nearest the disc** (the ringed one); control passes to whoever is closest as the disc moves.
+  The computer plays everyone else.
+- **Move:** WASD, the arrow keys, or the on-screen stick (phones and tablets). You still cannot cross the center line.
+- **Strike:** hold SPACE or the HOLD button to fill the power bar, release to hit. The disc goes straight at the other
+  team; push the stick up or down (W/S) as you release to angle it, up to about 35 degrees. A bar at 90% or more is a long hit.
+  Swings are forgiving (your reach grows with the disc's speed) and a straight hit is corrected for the bevel's curve; both
+  are adjustable under "Playing yourself" in the settings. Swinging when the disc is out of reach is a miss, and your swings can mishit
+  (more often when tired).
+- Serves are automatic in this version, for both teams.
+
+How it works: `POST /api/play` starts a session; the browser then calls `POST /api/play/<id>/step` about 20 times a
+second with `{move, aim, charge}`. Each call advances the match by the real time since the previous call (at most 0.25 s),
+so the game keeps its pace whatever the network delay, and returns the newest frame. Sessions expire after 5 idle minutes
+and at most 8 run at once. Engine side: `ServiceMatch(..., human_team=Team.A)` and `step(HumanInput(...))`.
+
+### Logs and metrics
+
+Each request gets an id (response header `X-Request-Id`, repeated as `request_id` in error bodies) and is logged with its
+method, route, status and time. Session ids are secrets, so they are never logged (the route appears as
+`/api/play/{id}/step`). `python -m service.api --log-format json` prints one JSON object per line. `GET /api/metrics`
+returns in-process counters (reset on restart); it exposes counts only.
+
+## Sabis Lab (web app)
+
+A browser app to run a match, watch it on the pitch, change the rules and physics from a settings panel, and
+run it again. The Python engine stays the single source of truth: a small standard-library server runs matches
+and the React + TypeScript app (in `web/`) displays them.
+
+```bash
+# terminal 1: the engine API (http://127.0.0.1:8000)
+python -m service.api
+
+# terminal 2: the web app (http://localhost:5173), forwards /api to the server
+cd web
+npm install        # first time only; commit the generated package-lock.json
+npm run dev
+```
+
+API (JSON): `GET /api/health`, `GET /api/metrics` (request counts, latency, matches run, live sessions),
+`GET /api/settings` (the editable settings, with ranges and defaults),
+`POST /api/matches` with `{"minutes", "seed", "opening_server", "settings": {...}}` returning a replay. All input is
+validated on the server; unknown or out-of-range values return a 400 with a message. To make another rule or
+physics value editable, add one entry to `service/api/settings.py`; the panel in the web app picks it up.
 
 ## Verification status
 
