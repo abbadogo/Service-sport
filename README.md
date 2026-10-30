@@ -47,7 +47,7 @@ python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -e .                 # installs the engine (no third-party packages)
 pip install -r requirements-dev.lock.txt   # pinned dev tools (what CI uses): lint, type check, build, audit
-python -m unittest discover -s tests  # run the tests (about a minute)
+python -m unittest discover -s tests  # run the tests (about 40 s)
 python -m service --minutes 2 --events   # play a simulated match
 ```
 
@@ -56,8 +56,7 @@ python -m service --minutes 2 --events   # play a simulated match
 Opening the repository in a Codespace (or VS Code "Reopen in Container") uses
 `.devcontainer/devcontainer.json`: Python 3.12, then `pip install -e .` and
 `pip install -r requirements-dev.txt` run automatically, with the Python, Ruff and mypy
-extensions. Nothing else is needed. (This configuration has not been opened in a Codespace by the
-author yet; report any problems.)
+extensions. Nothing else is needed.
 
 ## Usage
 
@@ -175,9 +174,9 @@ physics value editable, add one entry to `service/api/settings.py`; the panel in
 
 What has actually been run, and where.
 
-- **GitHub Actions (CI workflow), on pushes to `main`, as of commit `815a177` (run #47, 2026-10-23): passing.**
+- **GitHub Actions (CI workflow), on pushes to `main`, as of commit `4b6d585` (run #65, 2026-10-30): passing.**
   - Python 3.11 and 3.12: `ruff check .`, `mypy`, 99 unit tests, `python -m build`, `pip-audit`.
-  - Web (Node 22): `npm ci`, `eslint`, `tsc --noEmit`, 27 Vitest tests, `vite build`, `npm audit` (0 vulnerabilities).
+  - Web (Node 22): `npm ci`, `eslint`, `tsc --noEmit`, 120 Vitest tests, `vite build`, `npm audit` (0 vulnerabilities).
 - **Run by hand in a GitHub Codespace:** the same Python and web checks, the API server (`python -m service.api`)
   and the Sabis Lab web app in a browser.
 - **One red run in the history (#46, 2026-10-22):** a documentation-only commit failed at `npm audit` with an error from
@@ -186,8 +185,8 @@ What has actually been run, and where.
   vulnerability still fails it) and each job has a 15-minute limit.
 - **Live play:** covered by the CI run above (20 Python tests for the engine control code, session manager and API; web
   tests for the input logic, API client and strike button). A real-time check against a live server kept pace with the
-  wall clock (5.4 s of play simulated 5.3 s). The Play screen has not yet been played on a phone or in a browser by the
-  author, so how the controls and the polling connection *feel* is unverified.
+  wall clock (5.4 s of play simulated 5.3 s). The Play screen has been played informally on a phone browser by the
+  author, but there has been no structured playtest.
 - **Not covered by automated tests:** the browser UI end to end (there are tests for the logic, the API client and the
   settings panel, but none that drive the whole app), and the game's balance (see below).
 - **Python dev tools are pinned** in `requirements-dev.lock.txt` (generated from `requirements-dev.txt` with
@@ -202,8 +201,7 @@ What has actually been run, and where.
   39 points the losing side had no chaser: the ball died after that side's own mishit. Only 6 came from an exhausted
   chaser. The rules say tiredness should decide points; in the current model mishits do most of the work.
 - Mishit rates, the strike-aim habits and the bevel strength are tuning guesses, not measurements from real play.
-- Balance numbers come from small samples (16 matches); treat them as indicative.
-- The full test suite takes about 30 s because several tests play whole matches.
+- The full test suite takes about 40 s because several tests play whole matches.
 - Live play uses plain HTTP polling (about 20 requests a second), so it feels best on a fast, low-latency connection; a
   WebSocket connection would be smoother. You play Team A only, serves are automatic, and there is no sound.
 - Single process only; no accounts, persistence or online play against other people yet.
