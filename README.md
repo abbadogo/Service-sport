@@ -176,7 +176,7 @@ without touching the match loop.
 What has actually been run, and where.
 
 - **GitHub Actions (CI workflow), on pushes to `main`, as of commit `815a177` (run #47, 2026-10-23): passing.**
-  - Python 3.11 and 3.12: `ruff check .`, `mypy`, 62 unit tests, `python -m build`, `pip-audit`.
+  - Python 3.11 and 3.12: `ruff check .`, `mypy`, 99 unit tests, `python -m build`, `pip-audit`.
   - Web (Node 22): `npm ci`, `eslint`, `tsc --noEmit`, 27 Vitest tests, `vite build`, `npm audit` (0 vulnerabilities).
 - **Run by hand in a GitHub Codespace:** the same Python and web checks, the API server (`python -m service.api`)
   and the Sabis Lab web app in a browser.

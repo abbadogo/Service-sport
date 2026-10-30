@@ -4,7 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
-Verified on Python 3.12: `python -m unittest discover -s tests` ran 96 tests, all passing (about 40 s).
+Verified on Python 3.12: `python -m unittest discover -s tests` ran 99 tests, all passing (about 40 s).
 
 ### Added (quality gate)
 - Coverage gate: CI runs the tests under `coverage` and fails if coverage of `service` falls below 90%
