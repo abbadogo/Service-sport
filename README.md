@@ -90,6 +90,16 @@ result = ServiceMatch(MatchConfig(duration_minutes=2, seed=5)).run()
 print(result.score_a, result.score_b, result.winner, result.reason)
 ```
 
+## Run with Docker
+
+```bash
+docker build -t service-sport .
+docker run --rm -p 8000:8000 service-sport
+curl localhost:8000/api/health
+```
+
+The image uses only the standard library and runs the API server as a non-root user on port 8000.
+
 ## Environment variables
 
 None. The engine has no secrets, external services or deployment target. When a networked or
