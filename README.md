@@ -94,7 +94,7 @@ persistent component is added, a `.env.example` will be added with it.
 | Type check | `mypy` |
 | Build package | `python -m build` |
 | Dependency audit | `pip-audit -r requirements-dev.txt` |
-| Web: install | `cd web && npm install` (then `npm ci` once the lockfile is committed) |
+| Web: install | `cd web && npm ci` |
 | Web: lint / types / tests / build | `npm run lint`, `npm run typecheck`, `npm test`, `npm run build` (in `web/`) |
 
 The same checks run in GitHub Actions (`.github/workflows/ci.yml`) on every push and pull request,
@@ -160,7 +160,7 @@ python -m service.api
 
 # terminal 2: the web app (http://localhost:5173), forwards /api to the server
 cd web
-npm install        # first time only; commit the generated package-lock.json
+npm ci   # installs exactly what package-lock.json pins
 npm run dev
 ```
 
