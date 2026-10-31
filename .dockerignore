@@ -1,0 +1,10 @@
+.git
+.github
+web
+tests
+docs
+scripts
+**/__pycache__
+*.egg-info
+.venv
+node_modules
