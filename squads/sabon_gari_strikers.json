@@ -1,0 +1,11 @@
+{
+  "name": "Sabon Gari Strikers",
+  "players": [
+    {"name": "Chinedu Zaria", "shirt": 1, "pace": 42, "power": 52, "accuracy": 56, "endurance": 58, "reach": 58},
+    {"name": "Emeka Kantin", "shirt": 2, "pace": 52, "power": 50, "accuracy": 52, "endurance": 60, "reach": 48},
+    {"name": "Tunde Titin", "shirt": 6, "pace": 58, "power": 54, "accuracy": 50, "endurance": 56, "reach": 47},
+    {"name": "Yakubu Jaba", "shirt": 7, "pace": 64, "power": 56, "accuracy": 52, "endurance": 54, "reach": 50},
+    {"name": "Gideon Bompai", "shirt": 9, "pace": 70, "power": 58, "accuracy": 54, "endurance": 48, "reach": 52},
+    {"name": "Moses Zoo", "shirt": 11, "pace": 76, "power": 54, "accuracy": 48, "endurance": 44, "reach": 52}
+  ]
+}

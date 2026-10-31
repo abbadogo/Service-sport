@@ -1,0 +1,11 @@
+{
+  "name": "Hotoro Hawks",
+  "players": [
+    {"name": "Rufai Tudun", "shirt": 1, "pace": 45, "power": 48, "accuracy": 54, "endurance": 56, "reach": 56},
+    {"name": "Sani Kwarin", "shirt": 4, "pace": 56, "power": 46, "accuracy": 50, "endurance": 54, "reach": 46},
+    {"name": "Bala Gandun", "shirt": 5, "pace": 66, "power": 48, "accuracy": 48, "endurance": 50, "reach": 45},
+    {"name": "Dahiru Fanisau", "shirt": 8, "pace": 74, "power": 50, "accuracy": 52, "endurance": 46, "reach": 48},
+    {"name": "Isyaku Rijiya", "shirt": 10, "pace": 82, "power": 52, "accuracy": 56, "endurance": 42, "reach": 50},
+    {"name": "Bashir Maidile", "shirt": 7, "pace": 86, "power": 46, "accuracy": 46, "endurance": 38, "reach": 49}
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "Kumbotso Kings",
+  "players": [
+    {"name": "Habibu Challawa", "shirt": 1, "pace": 47, "power": 56, "accuracy": 60, "endurance": 66, "reach": 62},
+    {"name": "Mustapha Guringawa", "shirt": 3, "pace": 56, "power": 60, "accuracy": 56, "endurance": 64, "reach": 52},
+    {"name": "Tanimu Panshekara", "shirt": 4, "pace": 62, "power": 58, "accuracy": 58, "endurance": 60, "reach": 50},
+    {"name": "Ali Kureken", "shirt": 7, "pace": 68, "power": 62, "accuracy": 56, "endurance": 56, "reach": 53},
+    {"name": "Kabir Dan Maliki", "shirt": 10, "pace": 74, "power": 64, "accuracy": 60, "endurance": 52, "reach": 55},
+    {"name": "Surajo Mariri", "shirt": 8, "pace": 78, "power": 58, "accuracy": 54, "endurance": 48, "reach": 54}
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "Ungogo Eagles",
+  "players": [
+    {"name": "Ado Kadawa", "shirt": 1, "pace": 44, "power": 54, "accuracy": 58, "endurance": 62, "reach": 60},
+    {"name": "Sunusi Rimin", "shirt": 2, "pace": 54, "power": 52, "accuracy": 56, "endurance": 64, "reach": 50},
+    {"name": "Auwalu Zaura", "shirt": 5, "pace": 60, "power": 56, "accuracy": 52, "endurance": 58, "reach": 49},
+    {"name": "Garzali Kwanar", "shirt": 6, "pace": 64, "power": 58, "accuracy": 54, "endurance": 56, "reach": 52},
+    {"name": "Shamsu Tanagar", "shirt": 9, "pace": 70, "power": 60, "accuracy": 56, "endurance": 50, "reach": 53},
+    {"name": "Nuhu Bachirawa", "shirt": 11, "pace": 76, "power": 54, "accuracy": 50, "endurance": 46, "reach": 54}
+  ]
+}
