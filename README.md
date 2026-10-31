@@ -57,7 +57,7 @@ cd service_engine
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -e .                 # installs the engine (no third-party packages)
-pip install -r requirements-dev.lock.txt   # pinned dev tools (what CI uses): lint, type check, build, audit
+pip install -r requirements-dev.lock   # pinned dev tools (what CI uses): lint, type check, build, audit
 python -m unittest discover -s tests  # run the tests (about 40 s)
 python -m service --minutes 2 --events   # play a simulated match
 ```
@@ -200,7 +200,7 @@ What has actually been run, and where.
   author, but there has been no structured playtest.
 - **Not covered by automated tests:** the browser UI end to end (there are tests for the logic, the API client and the
   settings panel, but none that drive the whole app), and the game's balance (see below).
-- **Python dev tools are pinned** in `requirements-dev.lock.txt` (generated from `requirements-dev.txt` with
+- **Python dev tools are pinned** in `requirements-dev.lock` (generated from `requirements-dev.txt` with
   `pip-compile`; regenerate it to upgrade). The engine itself has no runtime dependencies.
 - **Dependabot** (`.github/dependabot.yml`) groups minor and patch updates and holds back major upgrades of React,
   eslint and TypeScript until they are done deliberately.
