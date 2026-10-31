@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 
 from service.agents.formation import home_position
 from service.agents.power_bar import PowerBar
+from service.agents.roster import Squad
 from service.core.config import StaminaConfig
 from service.core.types import TEAM_SIZE, Team, Vec2, clamp, lerp
 
@@ -27,6 +28,12 @@ class Player:
     strikes: int = 0
     power_bar: PowerBar = field(default_factory=PowerBar, repr=False)
     cfg: StaminaConfig = field(default_factory=StaminaConfig, repr=False)
+    # Set from a PlayerProfile; the defaults leave the engine exactly as it was.
+    name: str = ""
+    shirt: int = 0
+    drain_mult: float = 1.0    # stamina drain while running (lower = more endurance)
+    mishit_mult: float = 1.0   # scales the mishit chance (lower = more accurate)
+    aim_mult: float = 1.0      # scales the aim error (lower = straighter)
 
     # ------------------------------------------------------------- fatigue
     @property
@@ -65,7 +72,8 @@ class Player:
         self.distance_run += moved
         c = self.cfg
         effort = intensity * (moved / step)
-        self.stamina = clamp(self.stamina - c.sprint_drain_per_s * effort * effort * dt, 0.0, 1.0)
+        self.stamina = clamp(self.stamina - c.sprint_drain_per_s * self.drain_mult * effort * effort * dt,
+                             0.0, 1.0)
         if effort <= c.recovery_intensity:
             self.stamina = clamp(self.stamina + c.rest_recovery_per_s * dt, 0.0, 1.0)
         return moved
@@ -78,9 +86,24 @@ class Player:
             self.strike_cooldown = max(0.0, self.strike_cooldown - dt)
 
 
-def build_team(team: Team, rng: random.Random, cfg: StaminaConfig | None = None) -> list[Player]:
-    """Create a full squad standing in their home formation."""
+def build_team(team: Team, rng: random.Random, cfg: StaminaConfig | None = None,
+               squad: Squad | None = None) -> list[Player]:
+    """Create a full squad standing in their home formation.
+
+    With a ``squad`` the players take their names and ratings from it (and ``rng`` is not used);
+    without one they get the random ratings the engine always had."""
     cfg = cfg or StaminaConfig()
+    if squad is not None:
+        return [
+            Player(
+                pid=f"{team.value}{slot + 1}", team=team, slot=slot,
+                pos=home_position(team, slot),
+                max_speed=prof.max_speed, reach=prof.reach_m, strength=prof.strength, cfg=cfg,
+                name=prof.name, shirt=prof.shirt, drain_mult=prof.drain_mult,
+                mishit_mult=prof.mishit_mult, aim_mult=prof.aim_mult,
+            )
+            for slot, prof in enumerate(squad.players)
+        ]
     return [
         Player(
             pid=f"{team.value}{slot + 1}", team=team, slot=slot,

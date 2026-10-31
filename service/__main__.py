@@ -6,6 +6,7 @@ import argparse
 import sys
 from collections.abc import Sequence
 
+from service.agents.roster import Squad, load_squad
 from service.core.config import MatchConfig
 from service.core.types import Team
 from service.engine.events import PointScored
@@ -22,6 +23,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--opening-server", choices=[t.value for t in Team], default=Team.A.value)
     p.add_argument("--max-sim-seconds", type=float, default=7200.0,
                    help="safety limit on simulated time; the match is aborted past it")
+    p.add_argument("--squad-a", metavar="FILE",
+                   help="JSON squad file for Team A (named players with ratings)")
+    p.add_argument("--squad-b", metavar="FILE", help="JSON squad file for Team B")
     p.add_argument("--events", action="store_true", help="print every point as it was scored")
     return p
 
@@ -33,6 +37,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         config = MatchConfig(duration_minutes=args.minutes, seed=args.seed,
                              opening_server=Team(args.opening_server),
                              max_sim_seconds=args.max_sim_seconds)
+        squads: dict[Team, Squad] = {}
+        if args.squad_a:
+            squads[Team.A] = load_squad(args.squad_a)
+        if args.squad_b:
+            squads[Team.B] = load_squad(args.squad_b)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -40,7 +49,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     if resolution.clamped:
         print(f"note: requested {resolution.requested:g} min, "
               f"clamped to the {MAX_DURATION_MINUTES:g} min cap")
-    result = ServiceMatch(config).run()
+    for team, squad in squads.items():
+        print(f"Team {team.value}: {squad.name} (overall {squad.overall})")
+    result = ServiceMatch(config, squads=squads or None).run()
     if args.events:
         for e in result.events:
             if isinstance(e, PointScored):

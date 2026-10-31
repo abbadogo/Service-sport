@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import math
 import random
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -25,6 +26,7 @@ from service.agents.policies import (
     StrikePolicy,
     long_hit_speed,
 )
+from service.agents.roster import Squad
 from service.core.config import MatchConfig, PhysicsConfig, StaminaConfig, StrikeConfig
 from service.core.types import PITCH_LENGTH_M, PITCH_WIDTH_M, TEAM_SIZE, Team, Vec2, clamp
 from service.court.boundary_referee import BoundaryReferee, HandPickupTransition, ServeRequest
@@ -97,7 +99,8 @@ class ServiceMatch:
                  serve_policy: ServePolicy | None = None,
                  strike_policy: StrikePolicy | None = None,
                  selection: CursorSelection = CursorSelection.NEAREST_DISTANCE,
-                 human_team: Team | None = None) -> None:
+                 human_team: Team | None = None,
+                 squads: Mapping[Team, Squad] | None = None) -> None:
         self.config = config or MatchConfig()
         self.human_team = human_team  # that team's nearest player is driven by HumanInput
         seed = self.config.seed
@@ -114,7 +117,8 @@ class ServiceMatch:
 
         roster_rng = random.Random(seed * 7919 + 4)
         self.squads: dict[Team, list[Player]] = {
-            t: build_team(t, roster_rng, self.stamina_cfg) for t in Team}
+            t: build_team(t, roster_rng, self.stamina_cfg, (squads or {}).get(t)) for t in Team}
+        self.squad_names: dict[Team, str] = {t: sq.name for t, sq in (squads or {}).items()}
         self.players: dict[str, Player] = {p.pid: p for s in self.squads.values() for p in s}
         self._all: list[Player] = list(self.players.values())
         for p in self._all:
@@ -409,13 +413,14 @@ class ServiceMatch:
         lane_y = clamp(ball.y + lateral * cfg.human_lane_m, 4.0, PITCH_WIDTH_M - 4.0)
         direction = self._assist.compensate_curve(ball, direction, speed, recover, 0.0,
                                                   Vec2(ball.x, lane_y), skill=cfg.human_aim_assist)
-        err = self._rng.gauss(0.0, cfg.aim_error_for(level) + 0.04 * (1.0 - quality))
+        err = self._rng.gauss(0.0, (cfg.aim_error_for(level) + 0.04 * (1.0 - quality)) * p.aim_mult)
         self._execute_strike(p, ball, StrikeImpulse(direction.rotated(err), speed, recover, 0.0), level)
 
     def _execute_strike(self, p: Player, ball: TireBall, impulse: StrikeImpulse, level: float) -> None:
         """Apply a strike: the mishit and long-hit rules, bookkeeping and events (AI and human alike)."""
         c = self.strike_cfg
-        mishit = self._rng.random() < c.mishit_probability(ball.speed, p.speed_factor)
+        chance = min(c.mishit_max, c.mishit_probability(ball.speed, p.speed_factor) * p.mishit_mult)
+        mishit = self._rng.random() < chance
         long_hit = not mishit and level >= c.long_hit_level
         if long_hit:  # aimed to die deep in the opponent's end, short of the baseline
             impulse = StrikeImpulse(

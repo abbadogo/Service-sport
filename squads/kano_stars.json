@@ -1,0 +1,11 @@
+{
+  "name": "Kano Stars",
+  "players": [
+    {"name": "Auwal Danlami",   "shirt": 1,  "pace": 48, "power": 66, "accuracy": 72, "endurance": 70, "reach": 64},
+    {"name": "Bashir Gwarzo",   "shirt": 4,  "pace": 62, "power": 58, "accuracy": 55, "endurance": 74, "reach": 52},
+    {"name": "Sadiq Rimi",      "shirt": 6,  "pace": 70, "power": 50, "accuracy": 68, "endurance": 66, "reach": 48},
+    {"name": "Yusuf Dambatta",  "shirt": 8,  "pace": 76, "power": 61, "accuracy": 60, "endurance": 58, "reach": 55},
+    {"name": "Kabiru Tudun",    "shirt": 10, "pace": 82, "power": 70, "accuracy": 78, "endurance": 52, "reach": 60},
+    {"name": "Nura Fagge",      "shirt": 11, "pace": 88, "power": 64, "accuracy": 57, "endurance": 49, "reach": 58}
+  ]
+}

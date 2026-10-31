@@ -98,9 +98,14 @@ def record_match(match: ServiceMatch, every_ticks: int = 12) -> dict[str, Any]:
         if tick % every_ticks == 0 or match.phase is MatchPhase.FINISHED:
             frames.append(frame_of(match, ids))
     res = match.clock.resolution
-    return {
+    named = {p.pid: {"name": p.name, "shirt": p.shirt} for p in match._all if p.name}
+    out: dict[str, Any] = {
         "schema": {"head": FRAME_HEAD, "player_fields": PLAYER_FIELDS, "phases": PHASES},
         "players": ids, "frames": frames, "events": events,
         "result": result_of(match),
         "duration": {"requested": res.requested, "effective": res.effective, "clamped": res.clamped},
     }
+    if named:  # only matches played with squads carry names, so older replays are unchanged
+        out["profiles"] = named
+        out["squads"] = {t.value: n for t, n in match.squad_names.items()}
+    return out

@@ -1,0 +1,11 @@
+{
+  "name": "Dala Warriors",
+  "players": [
+    {"name": "Ibrahim Kurmi",   "shirt": 2,  "pace": 52, "power": 60, "accuracy": 63, "endurance": 68, "reach": 66},
+    {"name": "Lawan Sabon",     "shirt": 3,  "pace": 58, "power": 64, "accuracy": 50, "endurance": 72, "reach": 54},
+    {"name": "Garba Kofar",     "shirt": 5,  "pace": 66, "power": 55, "accuracy": 65, "endurance": 61, "reach": 51},
+    {"name": "Tijjani Madabo",  "shirt": 7,  "pace": 74, "power": 68, "accuracy": 58, "endurance": 56, "reach": 57},
+    {"name": "Abdul Yakasai",   "shirt": 9,  "pace": 79, "power": 59, "accuracy": 74, "endurance": 60, "reach": 53},
+    {"name": "Musa Gyadi",      "shirt": 12, "pace": 85, "power": 73, "accuracy": 62, "endurance": 47, "reach": 59}
+  ]
+}

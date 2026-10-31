@@ -131,7 +131,7 @@ class DefaultStrikePolicy:
         recover = self.RECOVER_MAX_RAD * quality
         target = Vec2(x_t, y_t)
         d = self.compensate_curve(ball, d.normalized(), speed, recover, kick, target)
-        err = r.gauss(0.0, self.cfg.aim_error_for(level) + 0.04 * (1.0 - quality))
+        err = r.gauss(0.0, (self.cfg.aim_error_for(level) + 0.04 * (1.0 - quality)) * striker.aim_mult)
         return StrikeImpulse(d.rotated(err).normalized(), speed, recover, kick)
 
     def compensate_curve(self, ball: TireBall, d: Vec2, speed: float, recover: float,
