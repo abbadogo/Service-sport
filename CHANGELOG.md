@@ -4,7 +4,14 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
-Verified on Python 3.12: `python -m unittest discover -s tests` ran 99 tests, all passing (about 40 s).
+### Added (players)
+- Named players with FIFA-style ratings (`pace`, `power`, `accuracy`, `endurance`, `reach`, 1 to 99) and squads
+  (`service/agents/roster.py`), loaded from JSON files in `squads/` and used by `ServiceMatch(..., squads=...)`
+  and the CLI (`--squad-a`, `--squad-b`). Example squads ship in `squads/`, including eight named after Kano
+  areas; all player names are made up. Replays made with squads carry `profiles` and `squads`. Without squads
+  the engine behaves as before. 15 new tests. The web app does not show names or ratings yet.
+
+Verified on Python 3.12: `python -m unittest discover -s tests` ran 114 tests, all passing.
 
 ### Added (quality gate)
 - Coverage gate: CI runs the tests under `coverage` and fails if coverage of `service` falls below 90%
