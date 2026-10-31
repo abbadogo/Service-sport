@@ -58,7 +58,7 @@ python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -e .                 # installs the engine (no third-party packages)
 pip install -r requirements-dev.lock   # pinned dev tools (what CI uses): lint, type check, build, audit
-python -m unittest discover -s tests  # run the tests (about 40 s)
+python -m unittest discover -s tests  # run the tests (about 60 s)
 python -m service --minutes 2 --events   # play a simulated match
 ```
 
@@ -210,7 +210,7 @@ physics value editable, add one entry to `service/api/settings.py`; the panel in
 What has actually been run, and where.
 
 - **GitHub Actions (CI workflow), on pushes to `main`, as of commit `4b6d585` (run #65, 2026-10-30): passing.**
-  - Python 3.11 and 3.12: `ruff check .`, `mypy`, 99 unit tests, `python -m build`, `pip-audit`.
+  - Python 3.11 and 3.12: `ruff check .`, `mypy`, 114 unit tests, `python -m build`, `pip-audit`.
   - Web (Node 22): `npm ci`, `eslint`, `tsc --noEmit`, 120 Vitest tests, `vite build`, `npm audit` (0 vulnerabilities).
 - **Run by hand in a GitHub Codespace:** the same Python and web checks, the API server (`python -m service.api`)
   and the Sabis Lab web app in a browser.
@@ -236,7 +236,7 @@ What has actually been run, and where.
   39 points the losing side had no chaser: the ball died after that side's own mishit. Only 6 came from an exhausted
   chaser. The rules say tiredness should decide points; in the current model mishits do most of the work.
 - Mishit rates, the strike-aim habits and the bevel strength are tuning guesses, not measurements from real play.
-- The full test suite takes about 40 s because several tests play whole matches.
+- The full test suite takes about 60 s because several tests play whole matches.
 - Live play uses plain HTTP polling (about 20 requests a second), so it feels best on a fast, low-latency connection; a
   WebSocket connection would be smoother. You play Team A only, serves are automatic, and there is no sound.
 - Single process only; no accounts, persistence or online play against other people yet.
