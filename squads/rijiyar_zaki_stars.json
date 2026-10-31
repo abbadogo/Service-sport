@@ -1,0 +1,11 @@
+{
+  "name": "Rijiyar Zaki Stars",
+  "players": [
+    {"name": "Umar Jibrin", "shirt": 1, "pace": 50, "power": 62, "accuracy": 70, "endurance": 72, "reach": 66},
+    {"name": "Aminu Kwana", "shirt": 3, "pace": 60, "power": 58, "accuracy": 62, "endurance": 70, "reach": 55},
+    {"name": "Haruna Zakari", "shirt": 5, "pace": 68, "power": 60, "accuracy": 66, "endurance": 64, "reach": 52},
+    {"name": "Shehu Bagwai", "shirt": 8, "pace": 74, "power": 64, "accuracy": 61, "endurance": 62, "reach": 56},
+    {"name": "Nasiru Zango", "shirt": 10, "pace": 80, "power": 68, "accuracy": 72, "endurance": 55, "reach": 58},
+    {"name": "Idris Maikudi", "shirt": 11, "pace": 84, "power": 66, "accuracy": 60, "endurance": 52, "reach": 57}
+  ]
+}

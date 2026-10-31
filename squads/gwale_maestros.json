@@ -1,0 +1,11 @@
+{
+  "name": "Gwale Maestros",
+  "players": [
+    {"name": "Salisu Gwale", "shirt": 1, "pace": 52, "power": 60, "accuracy": 78, "endurance": 68, "reach": 64},
+    {"name": "Abba Dalhatu", "shirt": 4, "pace": 62, "power": 56, "accuracy": 74, "endurance": 66, "reach": 54},
+    {"name": "Rabiu Kofar", "shirt": 6, "pace": 66, "power": 58, "accuracy": 76, "endurance": 62, "reach": 53},
+    {"name": "Mansur Tsakuwa", "shirt": 7, "pace": 72, "power": 62, "accuracy": 72, "endurance": 60, "reach": 55},
+    {"name": "Jamilu Gidan", "shirt": 10, "pace": 78, "power": 66, "accuracy": 80, "endurance": 54, "reach": 58},
+    {"name": "Zubairu Lamba", "shirt": 9, "pace": 82, "power": 64, "accuracy": 70, "endurance": 50, "reach": 56}
+  ]
+}

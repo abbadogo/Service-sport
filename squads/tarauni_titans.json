@@ -1,0 +1,11 @@
+{
+  "name": "Tarauni Titans",
+  "players": [
+    {"name": "Tukur Dorayi", "shirt": 1, "pace": 48, "power": 74, "accuracy": 60, "endurance": 70, "reach": 65},
+    {"name": "Murtala Gano", "shirt": 3, "pace": 56, "power": 72, "accuracy": 56, "endurance": 68, "reach": 54},
+    {"name": "Ahmad Unguwa", "shirt": 4, "pace": 62, "power": 70, "accuracy": 58, "endurance": 62, "reach": 52},
+    {"name": "Lukman Bachirawa", "shirt": 8, "pace": 66, "power": 76, "accuracy": 54, "endurance": 58, "reach": 56},
+    {"name": "Dauda Giginyu", "shirt": 10, "pace": 72, "power": 78, "accuracy": 62, "endurance": 52, "reach": 58},
+    {"name": "Ismail Hotoro", "shirt": 7, "pace": 76, "power": 72, "accuracy": 56, "endurance": 48, "reach": 55}
+  ]
+}
