@@ -90,6 +90,20 @@ result = ServiceMatch(MatchConfig(duration_minutes=2, seed=5)).run()
 print(result.score_a, result.score_b, result.winner, result.reason)
 ```
 
+## Squads and player ratings
+
+Players can have names and FIFA-style ratings. Each rating runs from 1 to 99 (50 is average) for `pace`,
+`power`, `accuracy`, `endurance` and `reach`, and the headline "overall" is their average. A squad is a JSON
+file with a name and exactly 6 players (name, shirt number, five ratings), listed from nearest their own
+baseline to nearest the midline. Example squads are in `squads/`; all names are made up.
+
+~~~bash
+python -m service --minutes 2 --squad-a squads/gwale_maestros.json --squad-b squads/hotoro_hawks.json
+~~~
+
+Without the squad flags, players get random ratings as before. Replays made with squads also record each
+player's name and shirt number. The web app does not show names or ratings yet.
+
 ## Run with Docker
 
 ```bash
