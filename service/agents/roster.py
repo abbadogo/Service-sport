@@ -15,6 +15,7 @@ All names in the shipped squads (``squads/``) are made up.
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -175,3 +176,13 @@ def list_squads(directory: str | Path = SQUAD_DIR) -> list[dict[str, Any]]:
         entry["id"] = path.stem
         out.append(entry)
     return out
+
+
+def load_squad_by_id(squad_id: str, directory: str | Path = SQUAD_DIR) -> Squad:
+    """Load ``<directory>/<squad_id>.json``; raises KeyError for an unknown or unsafe id."""
+    if not re.fullmatch(r"[a-z0-9_]+", squad_id):
+        raise KeyError(squad_id)
+    path = Path(directory) / f"{squad_id}.json"
+    if not path.is_file():
+        raise KeyError(squad_id)
+    return load_squad(path)

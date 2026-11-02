@@ -1,7 +1,7 @@
 import tempfile
 import unittest
 
-from service.agents.roster import list_squads
+from service.agents.roster import list_squads, load_squad_by_id
 
 RATINGS = ("pace", "power", "accuracy", "endurance", "reach")
 
@@ -26,6 +26,16 @@ class ListSquadsTests(unittest.TestCase):
     def test_empty_directory_gives_empty_list(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             self.assertEqual(list_squads(d), [])
+
+
+class LoadByIdTests(unittest.TestCase):
+    def test_loads_a_shipped_squad(self) -> None:
+        self.assertEqual(len(load_squad_by_id("kano_stars").players), 6)
+
+    def test_unknown_or_unsafe_ids_raise_key_error(self) -> None:
+        for bad in ("nobody", "../README", "kano_stars.json", "KANO_STARS", ""):
+            with self.subTest(bad=bad), self.assertRaises(KeyError):
+                load_squad_by_id(bad)
 
 
 if __name__ == "__main__":
