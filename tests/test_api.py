@@ -171,3 +171,34 @@ class SquadEndpointTests(ApiTestCase):
     def test_squads_only_allows_get(self) -> None:
         status, _ = self.call("POST", "/api/squads", {})
         self.assertGreaterEqual(status, 400)
+
+
+class PlaySquadTests(ApiTestCase):
+    CHOICE = {"squad_a": "kano_stars", "squad_b": "dala_warriors", "seed": 3}
+
+    def test_play_with_squads_sends_names_and_ratings(self) -> None:
+        status, body = self.call("POST", "/api/play", self.CHOICE)
+        self.assertEqual(status, 200)
+        self.assertEqual(len(body["profiles"]), 12)
+        profile = next(iter(body["profiles"].values()))
+        self.assertTrue(profile["name"])
+        self.assertIn(profile["team"], ("A", "B"))
+        self.assertEqual(set(body["squads"]), {"A", "B"})
+        self.assertEqual(len(body["squads"]["A"]["players"]), 6)
+
+    def test_play_without_squads_is_unchanged(self) -> None:
+        status, body = self.call("POST", "/api/play", {"seed": 3})
+        self.assertEqual(status, 200)
+        self.assertNotIn("profiles", body)
+        self.assertNotIn("squads", body)
+
+    def test_unknown_or_unsafe_squad_ids_are_rejected(self) -> None:
+        for bad in ("nobody", "../README", "kano_stars.json", 7, ""):
+            with self.subTest(bad=bad):
+                status, _ = self.call("POST", "/api/play", {"squad_a": bad})
+                self.assertEqual(status, 400)
+
+    def test_matches_accept_squads_too(self) -> None:
+        status, body = self.call("POST", "/api/matches", {**self.CHOICE, "minutes": 1})
+        self.assertEqual(status, 200)
+        self.assertIn('"profiles"', json.dumps(body))

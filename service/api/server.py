@@ -20,7 +20,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 from service import __version__
-from service.agents.roster import list_squads
+from service.agents.roster import Squad, list_squads, load_squad_by_id, squad_to_dict
 from service.api.errors import ApiError
 from service.api.logging_setup import configure_logging
 from service.api.metrics import Metrics
@@ -49,12 +49,23 @@ class MatchRequest:
     opening_server: Team = Team.A
     settings: dict[str, Any] = field(default_factory=dict)
     side: Team = Team.A  # live play: the team the human controls
+    squads: dict[Team, Squad] = field(default_factory=dict)  # optional named squads per side
+
+
+def squad_choice(choice: object, key: str) -> Squad:
+    """The squad a request names by id (a file stem in ``squads/``), or a 400 error."""
+    if not isinstance(choice, str):
+        raise ApiError(400, "invalid_squad", f"{key} must be a squad id such as 'kano_stars'")
+    try:
+        return load_squad_by_id(choice)
+    except KeyError as exc:
+        raise ApiError(400, "invalid_squad", f"{key}: no squad with id {choice!r}") from exc
 
 
 def parse_match_request(payload: object) -> MatchRequest:
     if not isinstance(payload, dict):
         raise ApiError(400, "invalid_request", "request body must be a JSON object")
-    extra = set(payload) - {"minutes", "seed", "opening_server", "settings", "side"}
+    extra = set(payload) - {"minutes", "seed", "opening_server", "settings", "side", "squad_a", "squad_b"}
     if extra:
         raise ApiError(400, "invalid_request", f"unknown field(s): {', '.join(sorted(extra))}")
 
@@ -82,7 +93,11 @@ def parse_match_request(payload: object) -> MatchRequest:
     settings = payload.get("settings", {})
     if not isinstance(settings, dict):
         raise ApiError(400, "invalid_settings", "settings must be an object")
-    return MatchRequest(minutes, seed, Team(opening), settings, Team(side))
+    squads: dict[Team, Squad] = {}
+    for team, key in ((Team.A, "squad_a"), (Team.B, "squad_b")):
+        if payload.get(key) is not None:
+            squads[team] = squad_choice(payload[key], key)
+    return MatchRequest(minutes, seed, Team(opening), settings, Team(side), squads)
 
 
 def run_match(req: MatchRequest) -> dict[str, Any]:
@@ -97,7 +112,7 @@ def run_match(req: MatchRequest) -> dict[str, Any]:
         raise ApiError(503, "busy", "the server is running other matches; try again shortly")
     try:
         replay = record_match(ServiceMatch(config, physics_config=physics, strike_config=strike,
-                                           stamina_config=stamina))
+                                           stamina_config=stamina, squads=req.squads or None))
         METRICS.count("matches_run")
         return replay
     finally:
@@ -131,10 +146,14 @@ def start_play(req: MatchRequest) -> dict[str, Any]:
     config = MatchConfig(duration_minutes=req.minutes, seed=req.seed, opening_server=req.opening_server,
                          max_sim_seconds=MAX_SIM_SECONDS, **rules)
     match = ServiceMatch(config, physics_config=physics, strike_config=strike,
-                         stamina_config=stamina, human_team=req.side)
+                         stamina_config=stamina, human_team=req.side,
+                         squads=req.squads or None)
     session_id, session = STORE.create(match, req.side)
     METRICS.count("live_sessions_started")
-    return {"session": session_id, **session.start_payload()}
+    payload: dict[str, Any] = {"session": session_id, **session.start_payload()}
+    if req.squads:
+        payload["squads"] = {t.value: squad_to_dict(sq) for t, sq in req.squads.items()}
+    return payload
 
 
 def parse_input(payload: object) -> HumanInput:

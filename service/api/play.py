@@ -38,11 +38,16 @@ class PlaySession:
 
     def start_payload(self) -> dict[str, Any]:
         with self._lock:
-            return {
+            out: dict[str, Any] = {
                 "schema": {"head": FRAME_HEAD, "player_fields": PLAYER_FIELDS, "phases": PHASES},
                 "players": self.ids, "side": self.team.value,
                 "frame": frame_of(self.match, self.ids),
             }
+            named = {p.pid: {"name": p.name, "shirt": p.shirt, "team": p.team.value}
+                     for p in self.match.players.values() if p.name}
+            if named:  # only matches played with squads carry names
+                out["profiles"] = named
+            return out
 
     def advance(self, inp: HumanInput, now: float) -> dict[str, Any]:
         """Advance by the real time since the last call, applying ``inp`` throughout."""
