@@ -8,6 +8,7 @@ RUN useradd --create-home appuser
 
 # The engine is standard library only, so there is nothing to pip install.
 COPY service/ ./service/
+COPY squads/ ./squads/
 USER appuser
 
 EXPOSE 8000
