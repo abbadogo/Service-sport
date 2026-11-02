@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
@@ -153,3 +153,25 @@ def load_squad(path: str | Path) -> Squad:
     except json.JSONDecodeError as exc:
         raise ValueError(f"{path} is not valid JSON: {exc}") from exc
     return Squad.from_dict(data)
+
+
+SQUAD_DIR = Path(__file__).resolve().parents[2] / "squads"
+
+
+def squad_to_dict(squad: Squad) -> dict[str, Any]:
+    """A squad as plain data: name, overall and every player's ratings."""
+    return {
+        "name": squad.name,
+        "overall": squad.overall,
+        "players": [{**asdict(p), "overall": p.overall} for p in squad.players],
+    }
+
+
+def list_squads(directory: str | Path = SQUAD_DIR) -> list[dict[str, Any]]:
+    """Every squad file in `directory`, sorted by file name, each with an `id` (the file stem)."""
+    out: list[dict[str, Any]] = []
+    for path in sorted(Path(directory).glob("*.json")):
+        entry = squad_to_dict(load_squad(path))
+        entry["id"] = path.stem
+        out.append(entry)
+    return out
