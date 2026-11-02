@@ -94,3 +94,9 @@ export interface SquadInfo {
 export interface Squad extends SquadInfo {
   id: string;
 }
+
+/** Names and ratings for a live match; only present when a squad was picked. */
+export interface Roster {
+  profiles: Record<string, PlayerTag>;
+  squads: Partial<Record<"A" | "B", SquadInfo>>;
+}

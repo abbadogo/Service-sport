@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Controls, MatchRequest, Replay, ReplayEvent } from "../types";
+import type { Controls, MatchRequest, Replay, ReplayEvent, Roster } from "../types";
 import { ApiRequestError } from "./api";
 import { endPlay, startPlay, stepPlay } from "./play";
 import { H, blendFrames, type Snapshot } from "./replay";
@@ -27,6 +27,7 @@ const messageOf = (err: unknown) =>
 
 /** Runs a live match: sends the controls about 20 times a second and keeps the latest two frames to draw between. */
 export function usePlay(getControls: () => Controls) {
+  const [roster, setRoster] = useState<Roster | null>(null);
   const [status, setStatus] = useState<PlayStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [events, setEvents] = useState<ReplayEvent[]>([]);
@@ -49,6 +50,7 @@ export function usePlay(getControls: () => Controls) {
       const controller = new AbortController();
       abort.current = controller;
       setStatus("starting");
+      setRoster(null);
       setError(null);
       setEvents([]);
       setResult(null);
@@ -58,6 +60,7 @@ export function usePlay(getControls: () => Controls) {
         session = s.session;
         players.current = s.players;
         setSide(s.side);
+        setRoster(s.profiles && s.squads ? { profiles: s.profiles, squads: s.squads } : null);
         buffer.current = { prev: s.frame, curr: s.frame, currAt: performance.now(), interval: STEP_EVERY_MS };
         setStatus("playing");
         while (!controller.signal.aborted) {
@@ -98,5 +101,5 @@ export function usePlay(getControls: () => Controls) {
     return blendFrames(players.current, b.prev, b.curr, k, b.curr[H.T]);
   }, []);
 
-  return { status, error, events, side, result, start, stop, snapshot };
+  return { status, error, events, side, result, start, stop, snapshot, roster };
 }
