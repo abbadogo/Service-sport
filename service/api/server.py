@@ -20,6 +20,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 from service import __version__
+from service.agents.roster import list_squads
 from service.api.errors import ApiError
 from service.api.logging_setup import configure_logging
 from service.api.metrics import Metrics
@@ -207,6 +208,9 @@ class Handler(BaseHTTPRequestHandler):
             elif path == "/api/settings":
                 self._allow(method, "GET")
                 self._send(200, {"settings": public_specs()})
+            elif path == "/api/squads":
+                self._allow(method, "GET")
+                self._send(200, {"squads": list_squads()})
             elif path == "/api/matches":
                 self._allow(method, "POST")
                 self._send(200, run_match(parse_match_request(self._read_json())))

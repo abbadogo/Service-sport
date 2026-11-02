@@ -153,3 +153,21 @@ class SettingsTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SquadEndpointTests(ApiTestCase):
+    def test_squads_lists_names_and_ratings(self) -> None:
+        status, body = self.call("GET", "/api/squads")
+        self.assertEqual(status, 200)
+        squads = body["squads"]
+        self.assertGreaterEqual(len(squads), 2)
+        for squad in squads:
+            self.assertTrue(squad["id"])
+            self.assertEqual(len(squad["players"]), 6)
+            for player in squad["players"]:
+                self.assertTrue(player["name"])
+                self.assertTrue(1 <= player["pace"] <= 99)
+
+    def test_squads_only_allows_get(self) -> None:
+        status, _ = self.call("POST", "/api/squads", {})
+        self.assertGreaterEqual(status, 400)
