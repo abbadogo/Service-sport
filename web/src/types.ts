@@ -37,6 +37,8 @@ export interface MatchRequest {
   seed?: number;
   opening_server?: "A" | "B";
   settings?: Record<string, number>;
+  squad_a?: string;
+  squad_b?: string;
 }
 
 export interface PlayStart {
@@ -45,6 +47,8 @@ export interface PlayStart {
   schema: Replay["schema"];
   players: string[];
   frame: number[];
+  profiles?: Record<string, PlayerTag>;
+  squads?: Partial<Record<"A" | "B", SquadInfo>>;
 }
 
 export interface PlayStep {
@@ -62,4 +66,31 @@ export interface Controls {
   move: Vec;
   aim: Vec;
   charge: boolean;
+}
+
+export interface PlayerTag {
+  name: string;
+  shirt: number;
+  team: "A" | "B";
+}
+
+export interface SquadPlayer {
+  name: string;
+  shirt: number;
+  overall: number;
+  pace: number;
+  power: number;
+  accuracy: number;
+  endurance: number;
+  reach: number;
+}
+
+export interface SquadInfo {
+  name: string;
+  overall: number;
+  players: SquadPlayer[];
+}
+
+export interface Squad extends SquadInfo {
+  id: string;
 }

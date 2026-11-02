@@ -1,4 +1,4 @@
-import type { MatchRequest, Replay, SettingSpec } from "../types";
+import type { MatchRequest, Replay, SettingSpec, Squad } from "../types";
 import { validateReplay } from "./replay";
 
 export class ApiRequestError extends Error {
@@ -59,4 +59,9 @@ export async function runMatch(req: MatchRequest, signal?: AbortSignal): Promise
     throw new ApiRequestError(err instanceof Error ? err.message : "invalid replay", "bad_response");
   }
   return replay;
+}
+
+export async function fetchSquads(signal?: AbortSignal): Promise<Squad[]> {
+  const r = await request<{ squads: Squad[] }>("/api/squads", {}, 15_000, signal);
+  return r.squads;
 }

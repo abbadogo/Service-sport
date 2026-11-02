@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiRequestError, fetchSettings, runMatch } from "./api";
+import { ApiRequestError, fetchSettings, fetchSquads, runMatch } from "./api";
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 
@@ -66,5 +66,39 @@ describe("runMatch", () => {
     expect(url).toBe("/api/matches");
     expect(init.method).toBe("POST");
     expect(JSON.parse(init.body as string)).toEqual({ minutes: 2, seed: 5 });
+  });
+});
+
+describe("fetchSquads", () => {
+  it("returns the squads with their players and ratings", async () => {
+    const squad = {
+      id: "kano_stars",
+      name: "Kano Stars",
+      overall: 62,
+      players: [
+        {
+          name: "Umar Jibrin",
+          shirt: 1,
+          overall: 64,
+          pace: 50,
+          power: 62,
+          accuracy: 70,
+          endurance: 72,
+          reach: 66,
+        },
+      ],
+    };
+    const reply = new Response(JSON.stringify({ squads: [squad] }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(reply));
+    await expect(fetchSquads()).resolves.toEqual([squad]);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("turns a network failure into a readable error", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+    await expect(fetchSquads()).rejects.toMatchObject({ code: "network" });
   });
 });
