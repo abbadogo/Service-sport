@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PlayView } from "./PlayView";
 
-const h = vi.hoisted(() => ({ start: null as any, fetchSquads: null as any }));
+const h = vi.hoisted(() => ({ start: null as any, fetchSquads: null as any, roster: null as any }));
 
 vi.mock("../lib/usePlay", () => ({
   usePlay: () => ({
@@ -15,6 +15,7 @@ vi.mock("../lib/usePlay", () => ({
     start: h.start,
     stop: () => undefined,
     snapshot: () => null,
+    roster: h.roster,
   }),
 }));
 vi.mock("../lib/api", () => ({
@@ -31,6 +32,7 @@ const SQUADS = [squad("kano_stars", "Kano Stars"), squad("gwale_maestros", "Gwal
 
 beforeEach(() => {
   h.start = vi.fn();
+  h.roster = null;
 });
 afterEach(cleanup);
 
@@ -72,5 +74,21 @@ describe("PlayView squad picker", () => {
     expect(screen.queryByLabelText("Your squad")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Start match" }));
     expect(h.start.mock.calls[0][0]).toEqual({ side: "A", minutes: 2, seed: expect.any(Number) });
+  });
+});
+
+describe("PlayView squad panel", () => {
+  it("shows the squads of a match played with named players", async () => {
+    h.fetchSquads = vi.fn().mockRejectedValue(new Error("down"));
+    h.roster = { profiles: {}, squads: { A: { name: "Kano Stars", overall: 62, players: [] } } };
+    render(<PlayView />);
+    expect(await screen.findByRole("heading", { name: /Kano Stars \(62\)/ })).toBeTruthy();
+  });
+
+  it("shows no panel for random players", async () => {
+    h.fetchSquads = vi.fn().mockRejectedValue(new Error("down"));
+    render(<PlayView />);
+    await waitFor(() => expect(h.fetchSquads).toHaveBeenCalled());
+    expect(screen.queryByRole("region", { name: "Squads" })).toBeNull();
   });
 });

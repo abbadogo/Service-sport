@@ -46,3 +46,30 @@ fieldset { border: 1px solid var(--line); border-radius: 8px; margin: 8px 0; } l
 .meter i { display: block; height: 100%; background: #ffb02e; } .meter i.full { background: #ff4d4d; }
 .hit { width: 130px; height: 130px; border-radius: 50%; font-weight: 700; font-size: 20px; touch-action: none; user-select: none; -webkit-user-select: none; background: var(--b); color: #fff; border: 0; }
 .hit small { display: block; font-weight: 400; font-size: 12px; }
+
+.squads {
+  display: grid;
+  gap: 12px;
+}
+.squad h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+.squad .scroll {
+  overflow-x: auto;
+}
+.squad table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.squad th,
+.squad td {
+  padding: 2px 6px;
+  text-align: right;
+  white-space: nowrap;
+}
+.squad th:nth-child(2),
+.squad td:nth-child(2) {
+  text-align: left;
+}

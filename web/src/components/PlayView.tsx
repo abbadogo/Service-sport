@@ -9,6 +9,7 @@ import { EventLog } from "./EventLog";
 import { Joystick } from "./Joystick";
 import { Pitch } from "./Pitch";
 import { Scoreboard } from "./Scoreboard";
+import { SquadPanel } from "./SquadPanel";
 import { StrikeButton } from "./StrikeButton";
 
 /** Play a live match as Team A: you drive the player nearest the disc, the computer plays the rest. */
@@ -35,7 +36,7 @@ export function PlayView() {
     return { move, aim: move, charge: touchCharge.current || keys.current.has("Space") };
   }, []);
 
-  const { status, error, events, side, result, start, stop, snapshot } = usePlay(getControls);
+  const { status, error, events, side, result, start, stop, snapshot, roster } = usePlay(getControls);
   const playing = status === "playing";
 
   useEffect(() => {
@@ -128,6 +129,7 @@ export function PlayView() {
           {playing && <button type="button" onClick={stop}>Stop</button>}
         </section>
 
+        <SquadPanel roster={roster} side={side} />
         {error && <p role="alert" className="error">{error}</p>}
         {status === "over" && result && (
           <p role="status">Full time: {result.score_a} to {result.score_b}, ended by {result.reason.toLowerCase().replaceAll("_", " ")}.</p>
