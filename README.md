@@ -16,6 +16,16 @@ A Python engine with a web client on top, not a frontend project.
 
 The engine holds the rules, physics, agents, match lifecycle and API. The web app is a thin client that calls that API. About 73% of the non-test code is the engine (line counts at 2026-10-31). A tool that labels this repository "frontend" is reacting to `web/package.json`, not to where the code and architecture are.
 
+## Quick start
+
+~~~bash
+git clone https://github.com/abbadogo/Service-sport && cd Service-sport
+python3 -m venv .venv && . .venv/bin/activate
+pip install -r requirements-dev.lock
+python -m unittest discover -s tests      # 114 tests, about 60 s
+cd web && npm ci && CI=1 npm test && npm run build
+~~~
+
 ## Features
 
 - **Gyroscopic tyre-roll physics**: bevel-induced steering bias, precession that tightens as the ball
