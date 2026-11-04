@@ -21,7 +21,7 @@ The engine holds the rules, physics, agents, match lifecycle and API. The web ap
 ~~~bash
 git clone https://github.com/abbadogo/Service-sport && cd Service-sport
 python3 -m venv .venv && . .venv/bin/activate
-pip install -r requirements-dev.lock
+pip install uv && uv sync --frozen
 python -m unittest discover -s tests      # 114 tests, about 60 s
 cd web && npm ci && CI=1 npm test && npm run build
 ~~~
@@ -67,7 +67,7 @@ cd service_engine
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -e .                 # installs the engine (no third-party packages)
-pip install -r requirements-dev.lock   # pinned dev tools (what CI uses): lint, type check, build, audit
+pip install uv && uv sync --frozen   # pinned dev tools (what CI uses): lint, type check, build, audit
 python -m unittest discover -s tests  # run the tests (about 60 s)
 python -m service --minutes 2 --events   # play a simulated match
 ```
@@ -138,7 +138,7 @@ persistent component is added, a `.env.example` will be added with it.
 | Lint | `ruff check .` |
 | Type check | `mypy` |
 | Build package | `python -m build` |
-| Dependency audit | `pip-audit -r requirements-dev.txt` |
+| Dependency audit | `pip-audit` (on an export of `uv.lock`) |
 | Web: install | `cd web && npm ci` |
 | Web: lint / types / tests / build | `npm run lint`, `npm run typecheck`, `npm test`, `npm run build` (in `web/`) |
 
@@ -234,8 +234,8 @@ What has actually been run, and where.
   author, but there has been no structured playtest.
 - **Not covered by automated tests:** the browser UI end to end (there are tests for the logic, the API client and the
   settings panel, but none that drive the whole app), and the game's balance (see below).
-- **Python dev tools are pinned** in `requirements-dev.lock` (generated from `requirements-dev.txt` with
-  `pip-compile`; regenerate it to upgrade). The engine itself has no runtime dependencies.
+- **Python dev tools are pinned** in `uv.lock` (declared in the `dev` group of `pyproject.toml`;
+  `uv lock --upgrade` to upgrade). The engine itself has no runtime dependencies.
 - **Dependabot** (`.github/dependabot.yml`) groups minor and patch updates and holds back major upgrades of React,
   eslint and TypeScript until they are done deliberately.
 
