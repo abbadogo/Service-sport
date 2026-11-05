@@ -1,5 +1,7 @@
 # Sabis ("Service"): street-game simulation engine
 
+[![CI](https://github.com/abbadogo/Service-sport/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/abbadogo/Service-sport/actions/workflows/ci.yml)
+
 A deterministic, headless simulation of **Sabis** (also called "Service"), a street game from Kano, northern Nigeria: a custom
 slipper-cut disc (bevelled with a Peak Milk can lid) is rolled like a tyre and kept upright by
 stick strikes. When it falls flat, a point is scored against the side it fell on. Written in
