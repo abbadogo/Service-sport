@@ -1,6 +1,8 @@
 .git
 .github
-web
+web/node_modules
+web/dist
+web/coverage
 tests
 docs
 scripts
