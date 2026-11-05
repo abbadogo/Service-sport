@@ -5,7 +5,20 @@ export const PITCH_W = 68;
 const TEAM_COLOR = { A: "#1f5fbf", B: "#d6336c" } as const;
 
 /** Draw the pitch and a snapshot. The context must already be scaled to CSS pixels. */
-export function drawScene(ctx: CanvasRenderingContext2D, snap: Snapshot | null, width: number): void {
+export type PlayerTags = Record<string, { name: string; shirt: number }>;
+
+/** Surname for the pitch label, cut short so it fits under the player. */
+export function shortName(name: string): string {
+  const last = name.trim().split(/\s+/).pop() ?? "";
+  return last.length > 10 ? `${last.slice(0, 9)}…` : last;
+}
+
+export function drawScene(
+  ctx: CanvasRenderingContext2D,
+  snap: Snapshot | null,
+  width: number,
+  tags?: PlayerTags | null,
+): void {
   const s = width / PITCH_L;
   ctx.clearRect(0, 0, width, PITCH_W * s);
   for (let c = 0; c < 15; c++) {
@@ -60,7 +73,12 @@ export function drawScene(ctx: CanvasRenderingContext2D, snap: Snapshot | null, 
     ctx.font = `bold ${Math.max(9, s * 1.05)}px system-ui, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(p.id, x, y);
+    const tag = tags?.[p.id];
+    ctx.fillText(tag ? String(tag.shirt) : p.id, x, y);
+    if (tag) {
+      ctx.font = `${Math.max(8, s * 0.85)}px system-ui, sans-serif`;
+      ctx.fillText(shortName(tag.name), x, y + s * 2.6);
+    }
   }
 
   const b = snap.ball;

@@ -1,8 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { PITCH_L, PITCH_W, drawScene } from "../lib/draw";
 import type { Snapshot } from "../lib/replay";
+import type { Roster } from "../types";
 
-export function Pitch({ snapshot }: { snapshot: Snapshot | null }) {
+export function Pitch({
+  snapshot,
+  roster,
+}: {
+  snapshot: Snapshot | null;
+  roster?: Roster | null;
+}) {
   const wrap = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [width, setWidth] = useState(800);
@@ -23,8 +30,8 @@ export function Pitch({ snapshot }: { snapshot: Snapshot | null }) {
     c.width = width * dpr;
     c.height = ((width * PITCH_W) / PITCH_L) * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    drawScene(ctx, snapshot, width);
-  }, [snapshot, width]);
+    drawScene(ctx, snapshot, width, roster?.profiles);
+  }, [snapshot, width, roster]);
 
   return (
     <div ref={wrap} className="pitch">

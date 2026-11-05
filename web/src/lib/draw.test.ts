@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PITCH_L, PITCH_W, drawScene } from "./draw";
+import { PITCH_L, PITCH_W, drawScene, shortName } from "./draw";
 import type { Snapshot } from "./replay";
 
 function fakeCtx() {
@@ -121,5 +121,36 @@ describe("drawScene", () => {
     expect(calls.arc).toHaveLength(1);
     expect(calls.arc[0].slice(0, 2)).toEqual([60, 80]);
     expect(calls.arc[0][2] as number).toBeCloseTo(3.2);
+  });
+});
+
+describe("drawScene player labels", () => {
+  const snap = { players: [player({ id: "A1" })], ball: null } as unknown as Snapshot;
+  const labels = (c: ReturnType<typeof fakeCtx>) => (c.calls.fillText ?? []).map((a) => a[0]);
+
+  it("draws the id when there are no profiles", () => {
+    const c = fakeCtx();
+    drawScene(c.ctx, snap, 800);
+    expect(labels(c)).toEqual(["A1"]);
+  });
+
+  it("draws the shirt number and surname when a profile matches", () => {
+    const c = fakeCtx();
+    drawScene(c.ctx, snap, 800, { A1: { name: "Musa Danjuma", shirt: 7 } });
+    expect(labels(c)).toEqual(["7", "Danjuma"]);
+  });
+
+  it("falls back to the id for a player without a profile", () => {
+    const c = fakeCtx();
+    drawScene(c.ctx, snap, 800, { B1: { name: "Ali Sani", shirt: 4 } });
+    expect(labels(c)).toEqual(["A1"]);
+  });
+});
+
+describe("shortName", () => {
+  it("uses the last word and cuts long names", () => {
+    expect(shortName("Musa Danjuma")).toBe("Danjuma");
+    expect(shortName("Ali")).toBe("Ali");
+    expect(shortName("Abdulrahman Olatunji-Ogundimu")).toBe("Olatunji-…");
   });
 });

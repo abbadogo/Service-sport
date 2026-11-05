@@ -136,7 +136,7 @@ export function PlayView() {
         )}
 
         <Scoreboard snapshot={snap} roster={roster} />
-        <Pitch snapshot={snap} />
+        <Pitch snapshot={snap} roster={roster} />
         <p className="muted">
           {me ? `You are ${me.id} (the ringed player). ` : ""}Move: WASD, arrow keys or the stick. Hold SPACE or the button to charge the power
           bar, release to hit: the disc goes straight at the other team, and pushing up or down as you release angles it.
