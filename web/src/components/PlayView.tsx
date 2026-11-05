@@ -135,7 +135,7 @@ export function PlayView() {
           <p role="status">Full time: {result.score_a} to {result.score_b}, ended by {result.reason.toLowerCase().replaceAll("_", " ")}.</p>
         )}
 
-        <Scoreboard snapshot={snap} />
+        <Scoreboard snapshot={snap} roster={roster} />
         <Pitch snapshot={snap} />
         <p className="muted">
           {me ? `You are ${me.id} (the ringed player). ` : ""}Move: WASD, arrow keys or the stick. Hold SPACE or the button to charge the power
