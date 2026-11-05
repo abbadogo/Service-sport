@@ -33,6 +33,8 @@ from service.engine.match_clock import resolve_duration
 from service.engine.state_machine import ServiceMatch
 from service.recording import record_match
 
+from . import static
+
 log = logging.getLogger("service.api")
 
 MAX_BODY_BYTES = 16_384
@@ -284,7 +286,20 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(400, "invalid_json", "request body is not valid JSON") from exc
 
     def do_GET(self) -> None:  # noqa: N802 - stdlib naming
+        path = self.path.split("?", 1)[0]
+        if not path.startswith("/api"):
+            served = static.load(path)
+            if served is not None:
+                self._send_file(*served)
+                return
         self._handle("GET")
+
+    def _send_file(self, data: bytes, ctype: str) -> None:
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
 
     def do_POST(self) -> None:  # noqa: N802
         self._handle("POST")
