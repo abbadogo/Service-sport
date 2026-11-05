@@ -1,3 +1,10 @@
+FROM node:22-alpine AS web
+WORKDIR /web
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+COPY web/ ./
+RUN npm run build
+
 FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1 \
@@ -9,6 +16,7 @@ RUN useradd --create-home appuser
 # The engine is standard library only, so there is nothing to pip install.
 COPY service/ ./service/
 COPY squads/ ./squads/
+COPY --from=web /web/dist ./web/dist
 USER appuser
 
 EXPOSE 8000
